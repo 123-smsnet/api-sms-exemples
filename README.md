@@ -50,6 +50,10 @@ exécutez. La [spécification OpenAPI](openapi/123-sms_openapi.yaml) et la
 
 ## Modules et intégrations
 
+- **Dolibarr ERP/CRM** : [`integrations/dolibarr`](integrations/dolibarr) — module dédié
+  (page d'envoi + classe `Sms123Api` pour vos triggers et crons)
+- **Odoo** : [`integrations/odoo`](integrations/odoo) — script XML-RPC sans module,
+  compatible Odoo Online (SaaS)
 - [Plugin WooCommerce](https://www.123-sms.net/developpeurs-api-123-sms-pro-woocommerce.php)
 - [Module PrestaShop](https://www.123-sms.net/developpeurs-api-123-sms-pro-prestashop.php)
 - Sans code : [Make](https://www.123-sms.net/envoyer-sms-make.php) ·
