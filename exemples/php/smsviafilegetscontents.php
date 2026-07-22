@@ -6,13 +6,13 @@
 # y compris dans un logiciel commercial. Fourni sans garantie.
 // initialisation des variables
 $requete = '';
-$param['email'] = 'monemail@mondomaine.com'; // login d'inscription � www.123-sms.net
+$param['email'] = 'votre_identifiant'; // login d'inscription � www.123-sms.net
 $param['pass'] = 'MOT2PASSE'; // mot de passe envoy� par www.123-sms.net ou personnalis�.
 $param['message'] = 'Ceci est un message de test *** \'���$sage .'; // message que l'on d�sire envoyer
 // *** (3 �toiles pour retour chariot)
 $param['numero'] = '33611223344-0660616263'; 
 // num�ros de t�l�phones auxquels on envoie le message (les num�ros st s�prar�s par un tiret '-'); 336 OU 06 pour envoi vers la France
-$param['from'] = 'monemail@mondomaine.com'; // expediteur (login d'inscription � www.123-sms.net)
+$param['from'] = 'votre_identifiant'; // expediteur (login d'inscription � www.123-sms.net)
 // construction de la requete
 foreach($param as $clef => $valeur) // pour chaque champ
 {

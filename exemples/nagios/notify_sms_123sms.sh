@@ -7,14 +7,14 @@
 # =====================================================================
 #  Usage : notify_sms_123sms.sh <numero> <message>
 
-EMAIL="votre-email@exemple.fr"   # e-mail du compte 123-SMS.net
+IDENTIFIANT="votre_identifiant"   # identifiant 123-SMS.net
 CLE_API="XXXXXX"                 # cle API : espace client > API
 
 NUMERO="${1:?Usage: $0 <numero> <message>}"
 MESSAGE="${2:?Usage: $0 <numero> <message>}"
 
 curl -sS --get "https://www.123-sms.net/http.php" \
-  --data-urlencode "email=${EMAIL}" \
+  --data-urlencode "email=${IDENTIFIANT}" \
   --data-urlencode "pass=${CLE_API}" \
   --data-urlencode "numero=${NUMERO}" \
   --data-urlencode "message=${MESSAGE}" > /dev/null

@@ -14,7 +14,7 @@ POST https://www.123-sms.net/http.php
 
 | Paramètre | Rôle |
 |---|---|
-| `email` | e-mail du compte 123-SMS |
+| `email` | votre identifiant 123-SMS (transmis par e-mail à l'inscription) |
 | `pass` | clé API (espace client → rubrique API) |
 | `numero` | destinataire(s) — `33601020304`, plusieurs séparés par `-` |
 | `message` | texte du SMS (160 caractères GSM par SMS) |

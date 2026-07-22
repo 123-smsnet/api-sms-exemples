@@ -7,12 +7,12 @@
 const API_URL = "https://www.123-sms.net/http.php";
 
 // --- Vos identifiants (espace client 123-SMS.net) --------------------
-const EMAIL   = "votre-email@exemple.fr";  // e-mail du compte
+const IDENTIFIANT   = "votre_identifiant";  // identifiant du compte
 const CLE_API = "XXXXXX";                  // cle API : espace client > API
 
 async function envoyerSMS(numero, message) {
   const params = new URLSearchParams({
-    email: EMAIL,
+    email: IDENTIFIANT,
     pass: CLE_API,
     numero: numero,
     message: message,

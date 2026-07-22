@@ -4,7 +4,7 @@ Attribute VB_Name = "Module123SMS"
 ' Copyright (C) 123-Sms.net - licence MIT
 ' Necessite Excel 2013+ sous Windows (fonction ENCODEURL et MSXML2).
 '
-' 1. Renseignez SMS_EMAIL et SMS_CLEAPI ci-dessous
+' 1. Renseignez SMS_IDENTIFIANT et SMS_CLEAPI ci-dessous
 '    (cle API : espace client https://www.123-sms.net > rubrique API).
 ' 2. =EnvoyerSMS("33601020304";"Bonjour !")  depuis une cellule,
 '    ou lancez la macro EnvoyerSMSListe (colonne A = numeros,
@@ -14,7 +14,7 @@ Attribute VB_Name = "Module123SMS"
 ' supprime le 0 initial). Formats acceptes : 0601020304 ou 33601020304.
 ' =====================================================================
 
-Const SMS_EMAIL As String = "votre-email@exemple.fr"
+Const SMS_IDENTIFIANT As String = "votre_identifiant"
 Const SMS_CLEAPI As String = "CLEAPI"
 Const SMS_URL As String = "https://www.123-sms.net/http.php"
 
@@ -24,7 +24,7 @@ Public Function EnvoyerSMS(numero As String, message As String, _
     Dim http As Object, corps As String
     On Error GoTo Erreur
     Set http = CreateObject("MSXML2.XMLHTTP.6.0")
-    corps = "email=" & EncodeParam(SMS_EMAIL) & _
+    corps = "email=" & EncodeParam(SMS_IDENTIFIANT) & _
             "&pass=" & EncodeParam(SMS_CLEAPI) & _
             "&numero=" & EncodeParam(numero) & _
             "&message=" & EncodeParam(message)

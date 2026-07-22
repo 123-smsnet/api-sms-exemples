@@ -3,7 +3,7 @@ Notifications Nagios par SMS via 123-SMS.net
 
 1. Copiez notify_sms_123sms.sh dans /usr/local/bin/ et rendez-le
    executable :  chmod +x /usr/local/bin/notify_sms_123sms.sh
-2. Renseignez EMAIL et CLE_API dans le script (espace client > API).
+2. Renseignez IDENTIFIANT et CLE_API dans le script (espace client > API).
 3. Ajoutez les deux commandes de commands-sms.cfg a votre configuration
    Nagios (ou Icinga / Centreon, syntaxe identique).
 4. Declarez le numero de mobile de chaque contact dans son champ

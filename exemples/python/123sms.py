@@ -11,14 +11,14 @@ import urllib.request
 API_URL = "https://www.123-sms.net/http.php"
 
 # --- Vos identifiants (espace client 123-SMS.net) --------------------
-EMAIL   = "votre-email@exemple.fr"   # e-mail du compte
+IDENTIFIANT   = "votre_identifiant"   # identifiant du compte
 CLE_API = "XXXXXX"                   # cle API : espace client > API > Generer Cle API
 
 
 def envoyer_sms(numero: str, message: str) -> str:
     """Envoie un SMS et retourne le code reponse de l'API."""
     params = urllib.parse.urlencode({
-        "email": EMAIL,
+        "email": IDENTIFIANT,
         "pass": CLE_API,
         "numero": numero,
         "message": message,

@@ -13,7 +13,7 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.time.Duration
 
-const val EMAIL = "votre-email@exemple.fr"
+const val IDENTIFIANT = "votre_identifiant"
 const val CLE_API = "CLEAPI"
 const val API_URL = "https://www.123-sms.net/http.php"
 
@@ -21,7 +21,7 @@ fun enc(s: String): String = URLEncoder.encode(s, Charsets.UTF_8)
 
 /** Envoie un SMS et renvoie le code retour de l'API (80 = envoye). */
 fun envoyerSms(numero: String, message: String): String {
-    val corps = "email=${enc(EMAIL)}&pass=${enc(CLE_API)}" +
+    val corps = "email=${enc(IDENTIFIANT)}&pass=${enc(CLE_API)}" +
                 "&numero=${enc(numero)}&message=${enc(message)}"
     val client = HttpClient.newBuilder()
         .connectTimeout(Duration.ofSeconds(10)).build()

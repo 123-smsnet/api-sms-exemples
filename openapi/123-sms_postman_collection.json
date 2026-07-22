@@ -11,7 +11,7 @@
     },
     {
       "key": "email",
-      "value": "votre-email@exemple.fr"
+      "value": "votre_identifiant"
     },
     {
       "key": "cleapi",
@@ -36,7 +36,7 @@
             {
               "key": "email",
               "value": "{{email}}",
-              "description": "E-mail du compte 123-SMS"
+              "description": "Identifiant 123-SMS"
             },
             {
               "key": "pass",

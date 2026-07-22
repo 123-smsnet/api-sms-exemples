@@ -16,13 +16,13 @@ import java.time.Duration;
 
 public class Sms123 {
 
-    static final String EMAIL   = "votre-email@exemple.fr";
+    static final String IDENTIFIANT   = "votre_identifiant";
     static final String CLE_API = "CLEAPI";
     static final String API_URL = "https://www.123-sms.net/http.php";
 
     /** Envoie un SMS et renvoie le code retour de l'API (80 = envoye). */
     public static String envoyerSms(String numero, String message) throws Exception {
-        String corps = "email="   + enc(EMAIL)
+        String corps = "email="   + enc(IDENTIFIANT)
                      + "&pass="   + enc(CLE_API)
                      + "&numero=" + enc(numero)
                      + "&message="+ enc(message);

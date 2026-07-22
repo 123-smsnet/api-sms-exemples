@@ -5,7 +5,7 @@
 // Execution :  npx tsx 123sms.ts     (ou : deno run --allow-net 123sms.ts)
 // Identifiants : espace client https://www.123-sms.net > rubrique API.
 
-const EMAIL = "votre-email@exemple.fr";
+const IDENTIFIANT = "votre_identifiant";
 const CLE_API = "CLEAPI";
 const API_URL = "https://www.123-sms.net/http.php";
 
@@ -27,7 +27,7 @@ export async function envoyerSms(
   options?: { sender?: string; refaccuse?: string },
 ): Promise<CodeRetour> {
   const corps = new URLSearchParams({
-    email: EMAIL,
+    email: IDENTIFIANT,
     pass: CLE_API,
     numero,
     message,

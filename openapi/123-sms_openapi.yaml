@@ -5,7 +5,7 @@ info:
   description: |
     Envoi de SMS professionnels via l'API HTTPS de 123-SMS.net
     (CLIC-EVENT, service francais depuis 2002).
-    Identifiants : e-mail du compte + cle API (espace client > API).
+    Identifiants : identifiant du compte + cle API (espace client > API).
     Documentation complete : https://www.123-sms.net/developpeurs-api.php
   contact:
     email: contact@123-sms.net
@@ -31,7 +31,7 @@ paths:
               properties:
                 email:
                   type: string
-                  description: E-mail du compte 123-SMS
+                  description: Identifiant 123-SMS
                 pass:
                   type: string
                   description: Cle API (6 caracteres)

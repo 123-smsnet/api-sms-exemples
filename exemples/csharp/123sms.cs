@@ -6,7 +6,7 @@
 // ou creer un projet console et coller ce fichier.
 //
 // Parametres (espace client https://www.123-sms.net > rubrique API) :
-//   email   : e-mail du compte 123-SMS
+//   email   : identifiant 123-SMS
 //   pass    : cle API (6 caracteres)
 //   numero  : destinataire(s), ex. "33601020304" (plusieurs : separes par -)
 //   message : texte du SMS (160 caracteres GSM par SMS)
@@ -23,7 +23,7 @@ class Sms123
     {
         var parametres = new Dictionary<string, string>
         {
-            ["email"]   = "votre-email@exemple.fr",
+            ["email"]   = "votre_identifiant",
             ["pass"]    = "CLEAPI",
             ["numero"]  = "33601020304",
             ["message"] = "Bonjour, ceci est un test 123-SMS."

@@ -5,7 +5,7 @@
 // Execution :  cargo run
 // Identifiants : espace client https://www.123-sms.net > rubrique API.
 
-const EMAIL: &str = "votre-email@exemple.fr";
+const IDENTIFIANT: &str = "votre_identifiant";
 const CLE_API: &str = "CLEAPI";
 const API_URL: &str = "https://www.123-sms.net/http.php";
 
@@ -16,7 +16,7 @@ fn envoyer_sms(numero: &str, message: &str) -> Result<String, ureq::Error> {
     let reponse = ureq::post(API_URL)
         .timeout(std::time::Duration::from_secs(15))
         .send_form(&[
-            ("email", EMAIL),
+            ("email", IDENTIFIANT),
             ("pass", CLE_API),
             ("numero", numero),
             ("message", message),
