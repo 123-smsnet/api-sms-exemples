@@ -1,0 +1,8 @@
+*.xlsm
+.env
+target/
+node_modules/
+*.class
+*.jar
+bin/
+obj/

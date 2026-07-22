@@ -1,0 +1,75 @@
+openapi: 3.0.3
+info:
+  title: API SMS 123-SMS.net
+  version: "1.0"
+  description: |
+    Envoi de SMS professionnels via l'API HTTPS de 123-SMS.net
+    (CLIC-EVENT, service francais depuis 2002).
+    Identifiants : e-mail du compte + cle API (espace client > API).
+    Documentation complete : https://www.123-sms.net/developpeurs-api.php
+  contact:
+    email: contact@123-sms.net
+    url: https://www.123-sms.net/contact.php
+servers:
+  - url: https://www.123-sms.net
+paths:
+  /http.php:
+    post:
+      summary: Envoyer un SMS
+      description: |
+        La reponse est un code texte. Principaux codes :
+        80 envoye - 81 envoi differe enregistre - 82 identifiants invalides -
+        83 credit insuffisant - 84 numero invalide - 91 doublon sur 24 h -
+        92 test a blanc positif - 97 Sender-ID invalide.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [email, pass, numero, message]
+              properties:
+                email:
+                  type: string
+                  description: E-mail du compte 123-SMS
+                pass:
+                  type: string
+                  description: Cle API (6 caracteres)
+                numero:
+                  type: string
+                  description: Destinataire(s) au format 33601020304, separes par - pour un envoi multiple
+                message:
+                  type: string
+                  description: Texte du SMS (160 caracteres GSM par SMS)
+                sender:
+                  type: string
+                  description: Sender-ID declare (optionnel)
+                refaccuse:
+                  type: string
+                  description: Reference pour l'accuse de reception par HTTP (optionnel)
+      responses:
+        "200":
+          description: Code retour de l'envoi (texte brut)
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "80"
+    get:
+      summary: Envoyer un SMS (GET)
+      description: Memes parametres que le POST, passes en query string (message encode en URL).
+      parameters:
+        - {name: email, in: query, required: true, schema: {type: string}}
+        - {name: pass, in: query, required: true, schema: {type: string}}
+        - {name: numero, in: query, required: true, schema: {type: string}}
+        - {name: message, in: query, required: true, schema: {type: string}}
+        - {name: sender, in: query, required: false, schema: {type: string}}
+        - {name: refaccuse, in: query, required: false, schema: {type: string}}
+      responses:
+        "200":
+          description: Code retour de l'envoi (texte brut)
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "80"

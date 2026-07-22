@@ -1,0 +1,16 @@
+Notifications Nagios par SMS via 123-SMS.net
+============================================
+
+1. Copiez notify_sms_123sms.sh dans /usr/local/bin/ et rendez-le
+   executable :  chmod +x /usr/local/bin/notify_sms_123sms.sh
+2. Renseignez EMAIL et CLE_API dans le script (espace client > API).
+3. Ajoutez les deux commandes de commands-sms.cfg a votre configuration
+   Nagios (ou Icinga / Centreon, syntaxe identique).
+4. Declarez le numero de mobile de chaque contact dans son champ
+   "pager", et associez les commandes de notification.
+5. Testez :  /usr/local/bin/notify_sms_123sms.sh 0612345678 "Test Nagios"
+
+Compatible Nagios Core 3/4, Icinga 1/2 (command legacy), Centreon.
+Astuce : les credits SMS 123-SMS n'expirent jamais - une reserve d'alerte
+reste disponible tant qu'elle n'est pas consommee.
+Support : contact@123-sms.net

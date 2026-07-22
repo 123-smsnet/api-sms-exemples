@@ -1,0 +1,117 @@
+{
+  "info": {
+    "name": "123-SMS.net — API SMS",
+    "description": "Envoi de SMS professionnels via l'API HTTPS de 123-SMS.net (service français, depuis 2002).\n\nRenseignez les variables de collection `email` et `cleapi` (espace client > rubrique API).\n\nCodes retour : 80 envoyé · 81 envoi différé enregistré · 82 identifiants invalides · 83 crédit insuffisant · 84 numéro invalide · 91 doublon sur 24 h · 92 test à blanc positif · 97 Sender-ID invalide (liste complète : https://www.123-sms.net/developpeurs-api.php).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://www.123-sms.net"
+    },
+    {
+      "key": "email",
+      "value": "votre-email@exemple.fr"
+    },
+    {
+      "key": "cleapi",
+      "value": "CLEAPI",
+      "type": "secret"
+    }
+  ],
+  "item": [
+    {
+      "name": "Envoyer un SMS",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "email",
+              "value": "{{email}}",
+              "description": "E-mail du compte 123-SMS"
+            },
+            {
+              "key": "pass",
+              "value": "{{cleapi}}",
+              "description": "Clé API (6 caractères)"
+            },
+            {
+              "key": "numero",
+              "value": "33601020304",
+              "description": "Destinataire(s), séparés par - pour un envoi multiple"
+            },
+            {
+              "key": "message",
+              "value": "Bonjour, ceci est un test 123-SMS.",
+              "description": "160 caractères GSM par SMS"
+            },
+            {
+              "key": "sender",
+              "value": "",
+              "description": "Sender-ID déclaré (optionnel)",
+              "disabled": true
+            },
+            {
+              "key": "refaccuse",
+              "value": "",
+              "description": "Référence pour l'accusé de réception par HTTP (optionnel)",
+              "disabled": true
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/http.php",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "http.php"
+          ]
+        },
+        "description": "La réponse est un code texte : 80 = message envoyé."
+      }
+    },
+    {
+      "name": "Envoyer un SMS (GET)",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "{{baseUrl}}/http.php?email={{email}}&pass={{cleapi}}&numero=33601020304&message=Test",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "http.php"
+          ],
+          "query": [
+            {
+              "key": "email",
+              "value": "{{email}}"
+            },
+            {
+              "key": "pass",
+              "value": "{{cleapi}}"
+            },
+            {
+              "key": "numero",
+              "value": "33601020304"
+            },
+            {
+              "key": "message",
+              "value": "Test"
+            }
+          ]
+        },
+        "description": "Même appel en GET (pensez à encoder le message en URL)."
+      }
+    }
+  ]
+}
