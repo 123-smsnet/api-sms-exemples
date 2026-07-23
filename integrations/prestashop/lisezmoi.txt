@@ -1,0 +1,29 @@
+123-SMS pour PrestaShop (module sms123) — v1.0.0
+=================================================
+
+Notifications SMS de commande via 123-SMS.net, service français d'envoi
+de SMS professionnels depuis 2002. Crédits prépayés sans abonnement.
+
+Fonctions
+---------
+- SMS au marchand à chaque paiement accepté ;
+- SMS au client à la confirmation et/ou à l'expédition (optionnels) ;
+- Modèles personnalisables : {numero} {prenom} {nom} {total} {boutique} ;
+- Code retour API tracé dans les logs PrestaShop (80 = envoyé) ;
+- Compatible PrestaShop 1.7 à 8.x.
+
+Installation
+------------
+1. Modules > Gestionnaire de modules > Installer un module > ce zip ;
+2. Configurer : identifiant du compte + clé API (transmis à
+   l'inscription sur 123-sms.net, espace client > API) ;
+3. Cocher les notifications souhaitées, enregistrer ;
+4. Passer une commande test : le code retour est dans
+   Paramètres avancés > Logs (80 = envoyé).
+
+RGPD : les SMS envoyés par ce module sont transactionnels (liés à la
+commande). N'utilisez pas le téléphone de commande pour de la
+prospection sans consentement explicite.
+
+Licence MIT — code source : github.com/123-smsnet/api-sms-exemples
+Support : contact@123-sms.net — 02 51 76 07 34
