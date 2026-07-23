@@ -56,7 +56,8 @@ exécutez. La [spécification OpenAPI](openapi/123-sms_openapi.yaml) et la
   compatible Odoo Online (SaaS)
 - **WooCommerce** : [`integrations/woocommerce`](integrations/woocommerce) — plugin de
   notifications SMS de commande ([guide](https://www.123-sms.net/developpeurs-api-123-sms-pro-woocommerce.php))
-- [Module PrestaShop](https://www.123-sms.net/developpeurs-api-123-sms-pro-prestashop.php)
+- **PrestaShop** : [`integrations/prestashop`](integrations/prestashop) — module sms123
+  (PrestaShop 1.7 à 8, [guide](https://www.123-sms.net/developpeurs-api-123-sms-pro-prestashop.php))
 - Sans code : [Make](https://www.123-sms.net/envoyer-sms-make.php) ·
   [Zapier](https://www.123-sms.net/envoyer-sms-zapier.php) ·
   [n8n](https://www.123-sms.net/envoyer-sms-n8n.php) ·
