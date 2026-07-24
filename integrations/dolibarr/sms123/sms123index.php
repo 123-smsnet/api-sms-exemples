@@ -5,7 +5,7 @@ if (!$res && file_exists('../main.inc.php')) { $res = @include '../main.inc.php'
 if (!$res && file_exists('../../main.inc.php')) { $res = @include '../../main.inc.php'; }
 if (!$res && file_exists('../../../main.inc.php')) { $res = @include '../../../main.inc.php'; }
 if (!$res) { die('Include of main fails'); }
-require_once __DIR__.'/class/sms123api.class.php';
+dol_include_once('/sms123/class/sms123api.class.php');
 
 if (empty($user->rights->sms123->envoyer)) {
 	accessforbidden();

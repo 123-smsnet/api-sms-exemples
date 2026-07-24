@@ -1,7 +1,7 @@
 <?php
 /* Classe d'appel de l'API 123-SMS.net - licence MIT
  * Reutilisable dans vos triggers, crons et scripts Dolibarr :
- *   require_once DOL_DOCUMENT_ROOT.'/custom/sms123/class/sms123api.class.php';
+ *   dol_include_once('/sms123/class/sms123api.class.php');
  *   $code = Sms123Api::envoyer('0601020304', 'Votre commande est prete.');
  */
 require_once DOL_DOCUMENT_ROOT.'/core/lib/geturl.lib.php';

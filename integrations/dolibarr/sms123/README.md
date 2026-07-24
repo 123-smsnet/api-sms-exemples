@@ -10,7 +10,7 @@ Contenu
 - Page « Outils > SMS 123-SMS » : envoi manuel (un ou plusieurs
   destinataires, numeros francais normalises automatiquement) ;
 - Classe Sms123Api reutilisable dans vos triggers, crons et scripts :
-    require_once DOL_DOCUMENT_ROOT.'/custom/sms123/class/sms123api.class.php';
+    dol_include_once('/sms123/class/sms123api.class.php');
     $code = Sms123Api::envoyer('0601020304', 'Votre commande est prete.');
 - Permission dediee « Envoyer des SMS via 123-SMS » ;
 - Proxy de l'instance respecte (client HTTP natif Dolibarr).
