@@ -1,0 +1,26 @@
+123-SMS.net - Envoyer des SMS aux contacts Odoo (sans module)
+==============================================================
+
+Contenu : 123-sms_odoo.py - script Python 3 autonome (XML-RPC).
+
+Pourquoi sans module ? L'API XML-RPC d'Odoo est standard et stable :
+le script fonctionne sur Odoo auto-heberge ET sur Odoo Online (SaaS),
+sans rien installer dans Odoo, et survit aux migrations de version.
+
+1. Renseignez la configuration en tete de script :
+   - URL, base, utilisateur et cle API Odoo (avatar > Mon profil >
+     Securite du compte > Cles API - Odoo 14+) ;
+   - identifiant + cle API 123-SMS (transmis par e-mail a
+     l'inscription - espace client > API) ;
+   - ETIQUETTE : l'etiquette de contacts Odoo a cibler ;
+   - MESSAGE : le texte ({nom} = nom du contact).
+2. python3 123-sms_odoo.py
+3. Le code retour s'affiche par contact (80 = envoye).
+
+Automatisation : planifiez le script (cron / Planificateur de taches)
+ou adaptez le filtre search_read (factures impayees, rendez-vous du
+lendemain...). Adaptations developpees gratuitement : contactez-nous.
+
+Page et documentation :
+https://www.123-sms.net/developpeurs-api-123-sms-pro-odoo.php
+Support : contact@123-sms.net - 02 51 76 07 34

@@ -1,0 +1,2 @@
+Module installable (Odoo 17/18 on-premise ou odoo.sh) : dezippez sms123/ dans votre dossier addons, puis installez '123-SMS - Envoi de SMS'.
+Odoo Online (SaaS) : utilisez le script XML-RPC du dossier script-xmlrpc/.
