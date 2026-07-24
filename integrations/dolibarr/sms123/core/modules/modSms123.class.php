@@ -22,7 +22,7 @@ class modSms123 extends DolibarrModules
 			.'sans abonnement. Page d\'envoi + classe reutilisable dans vos triggers.';
 		$this->editor_name = '123-SMS.net';
 		$this->editor_url = 'https://www.123-sms.net';
-		$this->version = '1.0.0';
+		$this->version = '1.0.1';
 		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
 		$this->picto = 'phone';
 		$this->config_page_url = array('setup.php@sms123');
@@ -49,8 +49,8 @@ class modSms123 extends DolibarrModules
 			'url' => '/custom/sms123/sms123index.php',
 			'langs' => 'sms123@sms123',
 			'position' => 1000,
-			'enabled' => 'isModEnabled("sms123")',
-			'perms' => '$user->hasRight("sms123", "envoyer")',
+			'enabled' => '$conf->sms123->enabled',
+			'perms' => '$user->rights->sms123->envoyer',
 			'target' => '',
 			'user' => 2,
 		);

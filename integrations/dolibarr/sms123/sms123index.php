@@ -7,7 +7,7 @@ if (!$res && file_exists('../../../main.inc.php')) { $res = @include '../../../m
 if (!$res) { die('Include of main fails'); }
 require_once __DIR__.'/class/sms123api.class.php';
 
-if (!$user->hasRight('sms123', 'envoyer')) {
+if (empty($user->rights->sms123->envoyer)) {
 	accessforbidden();
 }
 
