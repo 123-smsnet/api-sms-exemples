@@ -18,7 +18,7 @@ class Sms123 extends Module
         $this->name = 'sms123';
         $this->tab = 'emailing';
         $this->version = '1.0.0';
-        $this->author = '123-SMS.net (CLIC-EVENT)';
+        $this->author = '123-SMS.net (DRANER.com)';
         $this->need_instance = 0;
         $this->ps_versions_compliancy = ['min' => '1.7.0.0', 'max' => _PS_VERSION_];
         $this->bootstrap = true;

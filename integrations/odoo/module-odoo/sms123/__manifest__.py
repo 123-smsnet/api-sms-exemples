@@ -15,7 +15,7 @@ Envoi de SMS professionnels via 123-SMS.net
 Credits prepayes sans abonnement ni date d'expiration.
 Inscription gratuite (5 SMS offerts) sur https://www.123-sms.net
 """,
-    "author": "123-SMS.net (CLIC-EVENT)",
+    "author": "123-SMS.net (DRANER.com)",
     "website": "https://www.123-sms.net/developpeurs-api-123-sms-pro-odoo.php",
     "category": "Marketing",
     "version": "17.0.1.0.1",

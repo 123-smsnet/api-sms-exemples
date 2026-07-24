@@ -24,7 +24,7 @@ Recevez un SMS à chaque commande et tenez vos clients informés par SMS, sans a
 
 = Service externe =
 
-Ce plugin s'appuie sur le service d'envoi de SMS **123-SMS.net** (société française CLIC-EVENT, hébergement en France). Un compte 123-SMS.net est nécessaire (inscription gratuite, 5 SMS offerts).
+Ce plugin s'appuie sur le service d'envoi de SMS **123-SMS.net** — service français édité par DRANER.COM et facturé par CLIC-EVENT.com SARL, hébergé en France et en Allemagne (OVH / Hetzner). Un compte 123-SMS.net est nécessaire (inscription gratuite, 5 SMS offerts).
 
 À chaque envoi de SMS, le plugin transmet en HTTPS à `https://www.123-sms.net/http.php` : l'identifiant du compte, la clé API, le numéro du destinataire, le message et le sender-ID éventuel. Aucune autre donnée n'est transmise, et rien n'est envoyé tant que le plugin n'est pas configuré.
 

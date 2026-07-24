@@ -1,8 +1,8 @@
 # 123-SMS.net — Exemples officiels de l'API SMS
 
 Exemples d'envoi de SMS professionnels via l'API HTTPS de
-[123-SMS.net](https://www.123-sms.net/) — service français opéré depuis
-2002 par CLIC-EVENT. Crédits prépayés **sans abonnement ni date
+[123-SMS.net](https://www.123-sms.net/) — service français édité par
+DRANER.COM depuis 2002 (facturation : CLIC-EVENT.com SARL). Crédits prépayés **sans abonnement ni date
 d'expiration**, accusés de réception et réponses par HTTP.
 
 ## L'API en une ligne

@@ -7,7 +7,7 @@
  * Requires at least: 5.8
  * Requires PHP:      7.2
  * Requires Plugins:  woocommerce
- * Author:            123-SMS.net (CLIC-EVENT)
+ * Author:            123-SMS.net (DRANER.com)
  * Author URI:        https://www.123-sms.net/
  * License:           MIT
  * License URI:       https://opensource.org/licenses/MIT
