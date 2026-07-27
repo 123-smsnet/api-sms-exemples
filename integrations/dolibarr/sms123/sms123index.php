@@ -12,37 +12,92 @@ if (!$user->hasRight('sms123', 'envoyer')) {
 }
 
 $action = GETPOST('action', 'aZ09');
-$numero = GETPOST('numero', 'alphanohtml');
-$message = GETPOST('message', 'restricthtml');
-$resultat = '';
 
-if ($action == 'send' && !empty($numero) && !empty($message)) {
-	$code = Sms123Api::envoyer($numero, $message);
-	$resultat = Sms123Api::libelle($code);
-	$ok = in_array($code, array('80', '81', '92'));
-	setEventMessages($resultat, null, $ok ? 'mesgs' : 'errors');
+// Envoi puis redirection : le formulaire repart vide (schema POST/Redirect/GET)
+if ($action == 'send') {
+	$numero = GETPOST('numero', 'alphanohtml');
+	$message = GETPOST('message', 'restricthtml');
+	if (empty($numero) || empty($message)) {
+		setEventMessages('Indiquez un destinataire et un message.', null, 'errors');
+	} else {
+		$code = Sms123Api::envoyer($numero, $message, 0, 'manuel');
+		$ok = in_array($code, array('80', '81'), true);
+		setEventMessages(Sms123Api::libelle($code), null, $ok ? 'mesgs' : 'errors');
+	}
+	header('Location: '.$_SERVER['PHP_SELF']);
+	exit;
 }
 
 llxHeader('', 'Envoyer un SMS - 123-SMS');
+
+// --------------------------------------------------- solde du compte
+$solde = Sms123Api::solde();
+$couleur = ($solde !== null && $solde < 20) ? '#c83232' : '#268614';
+print '<div class="center" style="margin:6px 0 14px;">';
+print '<span style="display:inline-block; padding:8px 18px; border-radius:6px; border:1px solid #c9e6f2; background:#f2faff;">';
+print '<b>Solde 123-SMS.net :</b> ';
+if ($solde === null) {
+	print '<span class="opacitymedium">indisponible</span>';
+} else {
+	print '<b style="color:'.$couleur.'">'.price2num($solde, 'MT').' SMS</b>';
+	if ($solde < 20) {
+		print ' <span style="color:#c83232">(pensez a recharger)</span>';
+	}
+}
+print ' &nbsp;&mdash;&nbsp; <a href="https://www.123-sms.net/" target="_blank" rel="noopener">espace client</a>';
+print '</span></div>';
+
 print load_fiche_titre('Envoyer un SMS via 123-SMS.net', '', 'object_phoning');
 
+// --------------------------------------------------- formulaire
 print '<form method="POST" action="'.$_SERVER['PHP_SELF'].'">';
 print '<input type="hidden" name="token" value="'.newToken().'">';
 print '<input type="hidden" name="action" value="send">';
 print '<table class="noborder centpercent">';
 print '<tr class="liste_titre"><td colspan="2">Nouveau message</td></tr>';
 print '<tr class="oddeven"><td class="titlefield">Destinataire(s)</td><td>'
-	.'<input type="text" name="numero" size="40" value="'.dol_escape_htmltag($numero).'" placeholder="0601020304 (plusieurs : separes par -)"></td></tr>';
+	.'<input type="text" name="numero" size="40" value="" placeholder="0601020304 (plusieurs : separes par -)" autofocus></td></tr>';
 print '<tr class="oddeven"><td>Message</td><td>'
-	.'<textarea name="message" rows="4" cols="60" maxlength="480">'.dol_escape_htmltag($message).'</textarea>'
+	.'<textarea name="message" rows="4" cols="60" maxlength="480"></textarea>'
 	.'<br><span class="opacitymedium">160 caract&egrave;res GSM par SMS (message long : facturation par segment).</span></td></tr>';
 print '</table><br>';
 print '<div class="center"><input type="submit" class="button" value="Envoyer le SMS"></div>';
 print '</form>';
 
-print '<br><div class="opacitymedium">Astuce d&eacute;veloppeur : la classe <b>Sms123Api</b> '
-	.'(class/sms123api.class.php) est r&eacute;utilisable dans vos triggers et crons : '
-	.'<code>Sms123Api::envoyer($numero, $message)</code>.</div>';
+// --------------------------------------------------- historique
+print '<br>';
+print load_fiche_titre('Historique des envois', '', 'generic');
+
+$sql = 'SELECT rowid, datec, numero, message, code, methode, origine, fk_user FROM '.MAIN_DB_PREFIX.'sms123_envoi';
+$sql .= ' WHERE entity = '.((int) $conf->entity);
+$sql .= ' ORDER BY datec DESC';
+$sql .= $db->plimit(25, 0);
+$resql = $db->query($sql);
+
+print '<table class="noborder centpercent">';
+print '<tr class="liste_titre">';
+print '<td>Date</td><td>Destinataire</td><td>Message</td><td>R&eacute;sultat</td><td>Origine</td>';
+print '</tr>';
+if ($resql && $db->num_rows($resql) > 0) {
+	while ($obj = $db->fetch_object($resql)) {
+		$reussi = in_array($obj->code, array('80', '81'), true);
+		print '<tr class="oddeven">';
+		print '<td class="nowraponall">'.dol_print_date($db->jdate($obj->datec), 'dayhour').'</td>';
+		print '<td>'.dol_escape_htmltag($obj->numero).'</td>';
+		print '<td>'.dol_escape_htmltag(dol_trunc($obj->message, 60)).'</td>';
+		print '<td><b style="color:'.($reussi ? '#268614' : '#c83232').'">'.dol_escape_htmltag($obj->code).'</b> '
+			.'<span class="opacitymedium">'.dol_escape_htmltag(Sms123Api::libelle($obj->code)).'</span></td>';
+		print '<td class="opacitymedium">'.dol_escape_htmltag($obj->origine).'</td>';
+		print '</tr>';
+	}
+} else {
+	print '<tr class="oddeven"><td colspan="5" class="opacitymedium center">Aucun envoi enregistr&eacute; pour le moment.</td></tr>';
+}
+print '</table>';
+
+print '<br><div class="opacitymedium">Astuce d&eacute;veloppeur : la classe <b>Sms123Api</b> est r&eacute;utilisable partout&nbsp;: '
+	.'<code>dol_include_once(\'/sms123/class/sms123api.class.php\'); Sms123Api::envoyer($numero, $message);</code><br>'
+	.'Pour des envois automatiques sans code, activez les <b>d&eacute;clencheurs</b> dans la configuration du module.</div>';
 
 llxFooter();
 $db->close();

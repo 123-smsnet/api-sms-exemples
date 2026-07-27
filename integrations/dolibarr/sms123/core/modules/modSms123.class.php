@@ -22,10 +22,11 @@ class modSms123 extends DolibarrModules
 			.'sans abonnement. Page d\'envoi + classe reutilisable dans vos triggers.';
 		$this->editor_name = '123-SMS.net';
 		$this->editor_url = 'https://www.123-sms.net';
-		$this->version = '1.2.0';
+		$this->version = '2.0.0';
 		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
 		$this->picto = 'phone';
 		$this->config_page_url = array('setup.php@sms123');
+		$this->module_parts = array('triggers' => 1);
 		$this->depends = array();
 		$this->langfiles = array('sms123@sms123');
 		$this->phpmin = array(7, 0);
@@ -54,5 +55,32 @@ class modSms123 extends DolibarrModules
 			'target' => '',
 			'user' => 2,
 		);
+	}
+
+	/**
+	 * Activation du module : creation de la table d'historique.
+	 *
+	 * @param string $options options
+	 * @return int
+	 */
+	public function init($options = '')
+	{
+		$resultat = $this->_load_tables('/sms123/sql/');
+		if ($resultat < 0) {
+			return -1;
+		}
+
+		return $this->_init(array(), $options);
+	}
+
+	/**
+	 * Desactivation du module (les donnees d'historique sont conservees).
+	 *
+	 * @param string $options options
+	 * @return int
+	 */
+	public function remove($options = '')
+	{
+		return $this->_remove(array(), $options);
 	}
 }

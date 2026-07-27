@@ -15,6 +15,21 @@ Contenu
 - Permission dediee « Envoyer des SMS via 123-SMS » ;
 - Proxy de l'instance respecte (client HTTP natif Dolibarr).
 
+Trois facons d'envoyer des SMS depuis Dolibarr
+---------------------------------------------
+1. A LA MAIN : menu Outils > SMS 123-SMS. La page affiche le solde du
+   compte, envoie a un ou plusieurs destinataires, et conserve
+   l'historique des envois (le formulaire se vide apres chaque envoi).
+2. AUTOMATIQUEMENT, SANS CODE : dans la configuration du module,
+   cochez les evenements qui doivent declencher un SMS (commande
+   validee, facture validee, facture payee, expedition validee, devis
+   valide), choisissez le destinataire (le client ou votre numero
+   interne) et le message. Variables : {ref} {societe} {total} {date}
+   {masociete}.
+3. SUR MESURE : une ligne dans vos scripts, triggers ou crons :
+      dol_include_once('/sms123/class/sms123api.class.php');
+      $code = Sms123Api::envoyer('0601020304', 'Bonjour !');
+
 Installation
 ------------
 
@@ -85,6 +100,14 @@ Erreur « appel API impossible (HTTP 400) » sur les versions < 1.2.0 :
 corrigee. Mettez a jour le module (le corps de la requete etait
 re-encode par le client HTTP de Dolibarr). La version 1.2.0 bascule
 aussi automatiquement en GET si un pare-feu refuse le POST.
+
+Erreur « IP is a local IP. Must be an external URL » ?
+-----------------------------------------------------
+Votre serveur heberge aussi 123-sms.net (ou son DNS resout le domaine
+en adresse locale) : le garde-fou anti-SSRF de Dolibarr refuse alors
+l'appel. Corrige a partir de la version 1.3.0 du module (les URL
+locales sont explicitement autorisees pour cet appel, avec un repli
+cURL direct). Mettez simplement le module a jour.
 
 Le menu « Outils > SMS 123-SMS » n'apparait pas ?
 ------------------------------------------------
