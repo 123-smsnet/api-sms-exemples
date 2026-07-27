@@ -55,6 +55,15 @@ Le module fournit deux taches planifiees, desactivees par defaut :
   evenement : la tache peut donc tourner toutes les heures comme trois
   fois par jour, aucun rendez-vous n est saute.
 
+  ATTENTION AUX TYPES D EVENEMENTS : Dolibarr n affiche le champ
+  « Type » sur les fiches d evenement QUE si l option « Utiliser les
+  types d evenements » du module Agenda est activee (Accueil >
+  Configuration > Modules > Agenda). Tant qu elle ne l est pas, tous
+  les evenements sont du type « Autre » et un filtre par type ne
+  selectionne rien. La configuration du module 123-SMS le signale et
+  propose un lien direct vers cette option ; a defaut, cochez « Tous
+  les types d evenements ».
+
   NUMERO UTILISE, dans cet ordre :
     1. contact lie a l evenement : Mobile, puis Personnel, puis Professionnel
     2. a defaut, tiers lie a l evenement : Mobile, puis Telephone

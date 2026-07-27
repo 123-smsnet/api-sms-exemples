@@ -45,6 +45,7 @@ if ($action == 'save') {
 if ($action == 'savecron') {
 	dolibarr_set_const($db, 'SMS123_RDV_ACTIF', GETPOST('rdv_actif', 'int') ? 1 : 0, 'chaine', 0, '', $conf->entity);
 	dolibarr_set_const($db, 'SMS123_RDV_TYPES', implode(',', array_map('intval', GETPOST('rdv_types', 'array'))), 'chaine', 0, '', $conf->entity);
+	dolibarr_set_const($db, 'SMS123_RDV_TOUS', GETPOST('rdv_tous', 'int') ? 1 : 0, 'chaine', 0, '', $conf->entity);
 	dolibarr_set_const($db, 'SMS123_RDV_HEURES', (int) GETPOST('rdv_heures', 'int'), 'chaine', 0, '', $conf->entity);
 	dolibarr_set_const($db, 'SMS123_RDV_TPL', GETPOST('rdv_tpl', 'restricthtml'), 'chaine', 0, '', $conf->entity);
 	dolibarr_set_const($db, 'SMS123_RELANCE_ACTIF', GETPOST('relance_actif', 'int') ? 1 : 0, 'chaine', 0, '', $conf->entity);
@@ -257,6 +258,19 @@ if ($onglet == 'rappels') {
 		}
 		$db->free($resqlt);
 	}
+	// Dolibarr masque le type des evenements tant que l'option de l'agenda
+	// n'est pas activee : un filtre par type ne peut alors rien selectionner.
+	if (!getDolGlobalString('AGENDA_USE_EVENT_TYPE')) {
+		print '<tr class="oddeven"><td colspan="2"><div class="warning">'
+			.$langs->transnoentities('Sms123RdvTypeOff')
+			.' &nbsp;<a href="'.DOL_URL_ROOT.'/admin/agenda_other.php">'
+			.$langs->transnoentities('Sms123RdvTypeOffLink').'</a></div></td></tr>';
+	}
+
+	print '<tr class="oddeven"><td>'.$langs->transnoentities('Sms123RdvAllTypes').'</td><td>'
+		.'<input type="checkbox" name="rdv_tous" value="1"'.(getDolGlobalString('SMS123_RDV_TOUS') ? ' checked' : '').'>'
+		.' <span class="opacitymedium">'.$langs->transnoentities('Sms123RdvAllTypesHint').'</span></td></tr>';
+
 	$choisis = explode(',', getDolGlobalString('SMS123_RDV_TYPES'));
 	print '<tr class="oddeven"><td>'.$langs->transnoentities('Sms123RdvTypes').'</td><td>';
 	if (count($types)) {
@@ -329,7 +343,7 @@ if ($onglet == 'rappels') {
 
 		if ($selection['erreur'] !== '') {
 			print '<div class="error">'.dol_escape_htmltag($selection['erreur']).'</div>';
-		} elseif (!count($selection['types'])) {
+		} elseif (!count($selection['types']) && empty($selection['tous']) && !count($selection['lignes'])) {
 			print '<div class="warning">'.$langs->transnoentities('Sms123CronRdvNoType').'</div>';
 		} elseif (!count($selection['lignes'])) {
 			print '<div class="opacitymedium">'

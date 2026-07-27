@@ -39,7 +39,7 @@ class Sms123Cron
 			$this->error = $selection['erreur'];
 			return -1;
 		}
-		if (!count($selection['types'])) {
+		if (!count($selection['types']) && empty($selection['tous']) && !count($selection['lignes'])) {
 			$this->output = Sms123Api::t('Sms123CronRdvNoType');
 			return 0;
 		}
@@ -92,7 +92,8 @@ class Sms123Cron
 	{
 		dol_include_once('/sms123/class/sms123api.class.php');
 
-		$resultat = array('erreur' => '', 'heures' => 24, 'types' => array(), 'lignes' => array());
+		$resultat = array('erreur' => '', 'heures' => 24, 'types' => array(),
+			'tous' => getDolGlobalString('SMS123_RDV_TOUS') ? 1 : 0, 'lignes' => array());
 
 		foreach (explode(',', getDolGlobalString('SMS123_RDV_TYPES')) as $t) {
 			$t = (int) trim($t);
@@ -100,7 +101,10 @@ class Sms123Cron
 				$resultat['types'][] = $t;
 			}
 		}
-		if (!count($resultat['types'])) {
+		// Ni type coche, ni « tous les types » : seules restent les fiches ou
+		// le rappel a ete active a la main, la requete les retrouvera.
+		if (!count($resultat['types']) && empty($resultat['tous'])
+			&& !self::forcagesExistent($db)) {
 			return $resultat;
 		}
 
@@ -118,7 +122,9 @@ class Sms123Cron
 		//   actif = 0 : l'evenement est ecarte meme si son type est coche
 		//   actif = 1 : l'evenement est retenu meme si son type ne l'est pas
 		$conditions = array('r.actif = 1');
-		if (count($resultat['types'])) {
+		if (!empty($resultat['tous'])) {
+			$conditions[] = '(r.actif IS NULL OR r.actif = 1)';
+		} elseif (count($resultat['types'])) {
 			$conditions[] = '(a.fk_action IN ('.$db->sanitize(implode(',', $resultat['types'])).')'
 				.' AND (r.actif IS NULL OR r.actif = 1))';
 		}
@@ -137,11 +143,13 @@ class Sms123Cron
 
 		// Repli : module mis a jour sans reactivation, la table des choix
 		// par fiche n'existe pas encore. On retombe sur le seul filtre par type.
-		if (!$resql && count($resultat['types'])) {
+		if (!$resql && (count($resultat['types']) || !empty($resultat['tous']))) {
 			$sql = 'SELECT a.id, a.datep, a.label, a.fk_soc, a.fk_contact, NULL as forcage';
 			$sql .= ' FROM '.MAIN_DB_PREFIX.'actioncomm as a';
 			$sql .= ' WHERE a.entity IN ('.getEntity('agenda').')';
-			$sql .= ' AND a.fk_action IN ('.$db->sanitize(implode(',', $resultat['types'])).')';
+			if (empty($resultat['tous'])) {
+				$sql .= ' AND a.fk_action IN ('.$db->sanitize(implode(',', $resultat['types'])).')';
+			}
 			$sql .= " AND a.datep >= '".$debut."'";
 			$sql .= " AND a.datep <= '".$fin."'";
 			$sql .= ' ORDER BY a.datep';
@@ -184,6 +192,26 @@ class Sms123Cron
 	}
 
 	/* --------------------- choix « Rappel SMS » propre a une fiche */
+
+	/**
+	 * Existe-t-il au moins un evenement dont le rappel a ete active a la main
+	 * sur sa fiche ? Sert a decider s'il faut interroger l'agenda alors
+	 * qu'aucun type n'est coche dans la configuration.
+	 *
+	 * @param DoliDB $db base
+	 * @return bool
+	 */
+	public static function forcagesExistent($db)
+	{
+		$resql = $db->query('SELECT fk_actioncomm FROM '.MAIN_DB_PREFIX.'sms123_rdv WHERE actif = 1 LIMIT 1');
+		if (!$resql) {
+			return false;
+		}
+		$trouve = ($db->num_rows($resql) > 0);
+		$db->free($resql);
+
+		return $trouve;
+	}
 
 	/**
 	 * Le type d'evenement est-il coche dans la configuration du module ?
