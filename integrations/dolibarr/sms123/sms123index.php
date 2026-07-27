@@ -53,7 +53,14 @@ if ($solde === null) {
 print ' &nbsp;&mdash;&nbsp; <a href="https://www.123-sms.net/" target="_blank" rel="noopener">espace client</a>';
 print '</span></div>';
 
-print load_fiche_titre('Envoyer un SMS via 123-SMS.net', '', 'object_phoning');
+// Roue crantee vers la configuration (administrateurs)
+$lienconfig = '';
+if (!empty($user->admin)) {
+	$lienconfig = '<a class="valignmiddle" href="'.dol_buildpath('/sms123/admin/setup.php', 1)
+		.'?backtopage='.urlencode($_SERVER['PHP_SELF']).'" title="Configuration du module 123-SMS">'
+		.img_picto('Configuration du module 123-SMS', 'setup', 'class="pictofixedwidth"').'</a>';
+}
+print load_fiche_titre('Envoyer un SMS via 123-SMS.net', $lienconfig, 'object_phoning');
 
 // --------------------------------------------------- formulaire
 print '<form method="POST" action="'.$_SERVER['PHP_SELF'].'">';
