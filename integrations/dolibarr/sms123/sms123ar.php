@@ -5,12 +5,13 @@
  * conformement a la documentation « Retour des AR par http » :
  *     .../sms123ar.php?erreur=...&refenvoi=...&gsm=...
  *
- * Elle ne fait que mettre a jour une ligne existante de l'historique :
- * aucune donnee n'est creee, aucun envoi n'est declenche. Un appel qui ne
- * correspond a aucun envoi connu est ignore silencieusement.
+ * CONTRAT : cette page repond TOUJOURS « OK » en HTTP 200, y compris a un
+ * appel sans parametre. C'est ce que verifie 123-SMS au moment de declarer
+ * l'URL de retour ; une autre reponse fait refuser l'URL.
  *
- * L'URL a declarer aupres de 123-SMS est affichee dans la configuration
- * du module (section « Options avancees »).
+ * Elle ne fait que mettre a jour une ligne existante de l'historique :
+ * aucune donnee n'est creee, aucun envoi n'est declenche. Tout appel qui ne
+ * correspond a aucun envoi connu est ignore et simplement trace au syslog.
  */
 
 // Page publique : pas de session utilisateur, pas de jeton CSRF, pas de menu
@@ -27,13 +28,25 @@ if (!$res && file_exists('../../main.inc.php')) { $res = @include '../../main.in
 if (!$res && file_exists('../../../main.inc.php')) { $res = @include '../../../main.inc.php'; }
 if (!$res) { die('Include of main fails'); }
 
-top_httphead('text/plain');
-
-// Cle de securite optionnelle : si elle est configuree, elle est exigee
-$cleattendue = getDolGlobalString('SMS123_AR_CLE');
-if (!empty($cleattendue) && GETPOST('cle', 'alphanohtml') !== $cleattendue) {
-	http_response_code(403);
-	print 'KO';
+/**
+ * Repond « OK » et s'arrete. Le corps de la reponse doit contenir ce seul
+ * mot : les tampons de sortie eventuels sont donc vides au prealable.
+ *
+ * @param string $trace message a consigner dans le syslog (facultatif)
+ * @return void
+ */
+function sms123_repondre_ok($trace = '')
+{
+	if ($trace !== '') {
+		dol_syslog('sms123ar : '.$trace, LOG_INFO);
+	}
+	while (ob_get_level() > 0) {
+		@ob_end_clean();
+	}
+	if (!headers_sent()) {
+		top_httphead('text/plain');
+	}
+	print 'OK';
 	exit;
 }
 
@@ -41,9 +54,16 @@ $refenvoi = GETPOST('refenvoi', 'alphanohtml');
 $gsm = GETPOST('gsm', 'alphanohtml');
 $erreur = GETPOST('erreur', 'alphanohtml');
 
+// Cle de securite optionnelle : un appel sans la cle attendue est ignore,
+// mais recoit quand meme « OK » (l'URL doit rester declarable).
+$cleattendue = getDolGlobalString('SMS123_AR_CLE');
+if (!empty($cleattendue) && GETPOST('cle', 'alphanohtml') !== $cleattendue) {
+	sms123_repondre_ok('appel refuse : cle de securite absente ou incorrecte');
+}
+
+// Appel de verification de l'URL (aucun parametre) : rien a faire
 if ($refenvoi === '' && $gsm === '') {
-	print 'KO';
-	exit;
+	sms123_repondre_ok('appel sans parametre (verification de l URL)');
 }
 
 // erreur vide ou nulle = message remis
@@ -81,9 +101,7 @@ if ($rowid == 0 && $gsm !== '') {
 }
 
 if ($rowid == 0) {
-	dol_syslog('sms123ar : aucun envoi correspondant (refenvoi='.$refenvoi.', gsm='.$gsm.')', LOG_INFO);
-	print 'OK';
-	exit;
+	sms123_repondre_ok('aucun envoi correspondant (refenvoi='.$refenvoi.', gsm='.$gsm.')');
 }
 
 $sql = 'UPDATE '.MAIN_DB_PREFIX."sms123_envoi SET statut = '".$db->escape($statut)."'";
@@ -96,11 +114,8 @@ $sql .= ' WHERE rowid = '.((int) $rowid);
 
 if (!$db->query($sql)) {
 	dol_syslog('sms123ar : '.$db->lasterror(), LOG_ERR);
-	print 'KO';
-	exit;
+	sms123_repondre_ok('mise a jour impossible pour l envoi '.$rowid);
 }
 
-dol_syslog('sms123ar : envoi '.$rowid.' -> '.$statut, LOG_INFO);
-print 'OK';
-
 $db->close();
+sms123_repondre_ok('envoi '.$rowid.' -> '.$statut);

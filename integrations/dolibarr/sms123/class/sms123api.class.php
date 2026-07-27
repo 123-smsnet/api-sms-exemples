@@ -394,6 +394,30 @@ class Sms123Api
 	}
 
 	/**
+	 * Appelle l'URL de retour des accuses depuis le serveur et verifie
+	 * qu'elle repond bien « OK » : c'est exactement le controle que fait
+	 * 123-SMS avant d'accepter la declaration de l'URL.
+	 *
+	 * @return array url, http_code, corps, ok, erreur
+	 */
+	public static function testerUrlAccuse()
+	{
+		$url = self::urlAccuse();
+		$res = getURLContent($url, 'GET', '', 1, array(), array('http', 'https'), 2);
+
+		$code = empty($res['http_code']) ? 0 : (int) $res['http_code'];
+		$corps = isset($res['content']) ? trim(strip_tags((string) $res['content'])) : '';
+
+		return array(
+			'url' => $url,
+			'http_code' => $code,
+			'corps' => dol_trunc($corps, 200),
+			'ok' => ($code == 200 && strtoupper($corps) === 'OK'),
+			'erreur' => empty($res['curl_error_msg']) ? '' : $res['curl_error_msg'],
+		);
+	}
+
+	/**
 	 * Diagnostic complet de la connexion (bouton « Tester la connexion »).
 	 * Effectue un envoi A BLANC : rien n'est envoye, rien n'est debite.
 	 *

@@ -405,6 +405,31 @@ if ($onglet == 'avance') {
 	print '</table><br>';
 	print '<div class="center"><input type="submit" class="button" value="'.dol_escape_htmltag($langs->transnoentities('Sms123AdvancedSaveButton')).'"></div>';
 	print '</form>';
+
+	// --------------------------------------------- verification de l'URL de retour
+	print '<br><form method="POST" action="'.$_SERVER['PHP_SELF'].'">';
+	print '<input type="hidden" name="token" value="'.newToken().'">';
+	print '<input type="hidden" name="action" value="testar">';
+	print sms123_champ_onglet('avance');
+	print '<div class="center"><input type="submit" class="button button-save" value="'
+		.dol_escape_htmltag($langs->transnoentities('Sms123ArTestButton')).'">';
+	print '<br><span class="opacitymedium">'.$langs->transnoentities('Sms123ArTestHint').'</span></div>';
+	print '</form>';
+
+	if ($action == 'testar') {
+		$test = Sms123Api::testerUrlAccuse();
+		print '<br>';
+		if ($test['ok']) {
+			print '<div class="ok" style="color:#268614;"><b>'.$langs->transnoentities('Sms123ArTestOk').'</b></div>';
+		} elseif ($test['http_code'] == 0) {
+			print '<div class="error">'.$langs->transnoentities('Sms123ArTestUnreachable',
+				dol_escape_htmltag($test['erreur'] ? $test['erreur'] : 'HTTP 0')).'</div>';
+		} else {
+			print '<div class="error">'.$langs->transnoentities('Sms123ArTestKo',
+				$test['http_code'], dol_escape_htmltag($test['corps'])).'</div>';
+		}
+		print '<div class="opacitymedium">'.dol_escape_htmltag($test['url']).'</div>';
+	}
 }
 
 // =================================================== onglet : aide

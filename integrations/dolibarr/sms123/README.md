@@ -105,10 +105,17 @@ Deux conditions :
 2. communiquez a 123-SMS l URL de retour affichee juste en dessous
    (documentation « Retour des accuses de reception par http »).
 
-L URL de retour est publique par nature : elle n accepte que la mise a
-jour d un envoi deja enregistre, ne cree jamais de donnee et ne
-declenche aucun envoi. Une cle de securite facultative peut etre
-ajoutee : les appels qui ne la portent pas sont alors refuses.
+Cette URL repond TOUJOURS « OK » en HTTP 200, y compris a un appel sans
+parametre : c est ce que 123-SMS verifie au moment de la declarer. Le
+bouton « Verifier l URL de retour » de la configuration fait ce controle
+depuis votre serveur et affiche la reponse obtenue : utilisez-le avant
+de communiquer l URL.
+
+L URL est publique par nature : elle n accepte que la mise a jour d un
+envoi deja enregistre, ne cree jamais de donnee et ne declenche aucun
+envoi. Une cle de securite facultative peut etre ajoutee : les appels
+qui ne la portent pas sont ignores (ils recoivent quand meme « OK »,
+sans quoi l URL ne serait pas declarable).
 
 Trace dans l agenda du client
 -----------------------------
