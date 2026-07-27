@@ -15,23 +15,64 @@ Contenu
 - Permission dediee « Envoyer des SMS via 123-SMS » ;
 - Proxy de l'instance respecte (client HTTP natif Dolibarr).
 
-Installation (2 minutes)
-------------------------
-1. Decompressez l'archive dans htdocs/custom/  (vous devez obtenir
-   htdocs/custom/sms123/) ;
-2. Accueil > Configuration > Modules/Applications : activez
-   « SMS 123-SMS.net » (famille Interfaces) ;
-3. Cliquez l'icone de configuration du module : renseignez votre
-   identifiant et votre cle API (transmis par e-mail a l'inscription
-   sur 123-sms.net, ou lors de la regeneration de la cle — espace
-   client > API) ;
-4. Donnez la permission « Envoyer des SMS » aux utilisateurs concernes ;
-5. Menu Outils > SMS 123-SMS : envoyez un SMS de test
-   (la reponse s'affiche : 80 = envoye).
+Installation
+------------
 
-Compatibilite : squelette standard Dolibarr, developpe pour
-Dolibarr 14 et plus (PHP 7+). Multi-entites supporte (configuration
-par entite).
+ETAPE 1 (a ne pas sauter) : autoriser le repertoire des modules
+externes dans conf.php.
+
+Dolibarr n'affiche AUCUN module du dossier custom/ tant que ce
+repertoire n'est pas declare. Ouvrez htdocs/conf/conf.php et
+verifiez que ces deux lignes existent et ne sont PAS commentees
+(pas de // devant) :
+
+    $dolibarr_main_url_root_alt = '/custom';
+    $dolibarr_main_document_root_alt = '/chemin/vers/dolibarr/htdocs/custom';
+
+- Sur beaucoup d'installations ces lignes existent deja, commentees :
+  il suffit de retirer les // du debut.
+- Remplacez le chemin par le chemin reel de votre installation
+  (exemple : /var/www/dolibarr/htdocs/custom).
+- Si le dossier htdocs/custom/ n'existe pas, creez-le (droits en
+  ecriture pour le serveur web).
+- Enregistrez, puis rechargez la page des modules dans Dolibarr.
+
+ETAPE 2 : decompressez l'archive dans htdocs/custom/
+Vous devez obtenir htdocs/custom/sms123/ contenant
+core/modules/modSms123.class.php (si vous obtenez
+htdocs/custom/sms123/sms123/..., remontez d'un niveau).
+
+ETAPE 3 : Accueil > Configuration > Modules/Applications, onglet
+« Interfaces avec systemes externes » (ou recherchez « SMS ») :
+activez « SMS 123-SMS.net ».
+
+ETAPE 4 : cliquez l'icone de configuration du module et renseignez
+votre identifiant et votre cle API (transmis par e-mail a
+l'inscription sur 123-sms.net, ou lors de la regeneration de la
+cle — espace client > API).
+
+ETAPE 5 : donnez la permission « Envoyer des SMS via 123-SMS » aux
+utilisateurs concernes (Utilisateurs & groupes > onglet Permissions).
+
+ETAPE 6 : menu Outils > SMS 123-SMS : envoyez un SMS de test
+(la reponse s'affiche : 80 = envoye).
+
+Le module n'apparait pas dans la liste ?
+----------------------------------------
+1. conf.php : les deux lignes de l'etape 1 sont-elles bien actives
+   (sans //) et le chemin est-il correct ? C'est la cause n°1.
+2. Arborescence : le fichier
+   htdocs/custom/sms123/core/modules/modSms123.class.php
+   doit exister exactement a cet emplacement.
+3. Droits : le serveur web (www-data, apache...) doit pouvoir LIRE
+   le dossier sms123 et son contenu.
+4. Cache : Accueil > Configuration > Divers > « Purger le cache »,
+   ou supprimez le contenu de documents/admin/temp/, puis rechargez.
+5. Hebergement mutualise : verifiez que le transfert FTP est
+   complet (6 fichiers) et n'a pas ete interrompu.
+
+Compatibilite : Dolibarr 14 et plus, PHP 7.0 a 8.4.
+Multi-entites supporte (configuration par entite).
 
 Envois automatiques (relance facture, commande prete...) : la classe
 Sms123Api s'appelle en une ligne depuis vos triggers ; 123-SMS

@@ -22,7 +22,7 @@ class modSms123 extends DolibarrModules
 			.'sans abonnement. Page d\'envoi + classe reutilisable dans vos triggers.';
 		$this->editor_name = '123-SMS.net';
 		$this->editor_url = 'https://www.123-sms.net';
-		$this->version = '1.0.2';
+		$this->version = '1.0.3';
 		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
 		$this->picto = 'phone';
 		$this->config_page_url = array('setup.php@sms123');
