@@ -111,16 +111,46 @@ class Sms123Cron
 		$resultat['heures'] = $heures;
 
 		$maintenant = dol_now();
-		$sql = 'SELECT a.id, a.datep, a.label, a.fk_soc, a.fk_contact';
+		$debut = $db->idate($maintenant);
+		$fin = $db->idate($maintenant + ($heures * 3600));
+
+		// Le choix propre a une fiche (table sms123_rdv) prime sur le type :
+		//   actif = 0 : l'evenement est ecarte meme si son type est coche
+		//   actif = 1 : l'evenement est retenu meme si son type ne l'est pas
+		$conditions = array('r.actif = 1');
+		if (count($resultat['types'])) {
+			$conditions[] = '(a.fk_action IN ('.$db->sanitize(implode(',', $resultat['types'])).')'
+				.' AND (r.actif IS NULL OR r.actif = 1))';
+		}
+
+		$sql = 'SELECT a.id, a.datep, a.label, a.fk_soc, a.fk_contact, r.actif as forcage';
 		$sql .= ' FROM '.MAIN_DB_PREFIX.'actioncomm as a';
+		$sql .= ' LEFT JOIN '.MAIN_DB_PREFIX.'sms123_rdv as r ON r.fk_actioncomm = a.id';
 		$sql .= ' WHERE a.entity IN ('.getEntity('agenda').')';
-		$sql .= ' AND a.fk_action IN ('.$db->sanitize(implode(',', $resultat['types'])).')';
-		$sql .= " AND a.datep >= '".$db->idate($maintenant)."'";
-		$sql .= " AND a.datep <= '".$db->idate($maintenant + ($heures * 3600))."'";
+		$sql .= " AND a.datep >= '".$debut."'";
+		$sql .= " AND a.datep <= '".$fin."'";
+		$sql .= ' AND ('.implode(' OR ', $conditions).')';
 		$sql .= ' ORDER BY a.datep';
 		$sql .= $db->plimit($max, 0);
 
 		$resql = $db->query($sql);
+
+		// Repli : module mis a jour sans reactivation, la table des choix
+		// par fiche n'existe pas encore. On retombe sur le seul filtre par type.
+		if (!$resql && count($resultat['types'])) {
+			$sql = 'SELECT a.id, a.datep, a.label, a.fk_soc, a.fk_contact, NULL as forcage';
+			$sql .= ' FROM '.MAIN_DB_PREFIX.'actioncomm as a';
+			$sql .= ' WHERE a.entity IN ('.getEntity('agenda').')';
+			$sql .= ' AND a.fk_action IN ('.$db->sanitize(implode(',', $resultat['types'])).')';
+			$sql .= " AND a.datep >= '".$debut."'";
+			$sql .= " AND a.datep <= '".$fin."'";
+			$sql .= ' ORDER BY a.datep';
+			$sql .= $db->plimit($max, 0);
+			$resql = $db->query($sql);
+			dol_syslog('Sms123Cron : table sms123_rdv absente, reactivez le module pour '
+				.'utiliser la case « Rappel SMS » des fiches evenement.', LOG_WARNING);
+		}
+
 		if (!$resql) {
 			$resultat['erreur'] = Sms123Api::t('Sms123SqlError', $db->lasterror());
 			return $resultat;
@@ -144,12 +174,103 @@ class Sms123Cron
 				'numero' => $trouve['numero'],
 				'source' => $trouve['source'],
 				'etat' => $etat,
+				'forcage' => ($obj->forcage === null ? null : (int) $obj->forcage),
 				'objet' => $obj,
 			);
 		}
 		$db->free($resql);
 
 		return $resultat;
+	}
+
+	/* --------------------- choix « Rappel SMS » propre a une fiche */
+
+	/**
+	 * Le type d'evenement est-il coche dans la configuration du module ?
+	 *
+	 * @param DoliDB $db      base
+	 * @param int    $type_id identifiant du type (actioncomm.fk_action)
+	 * @return bool
+	 */
+	public static function typeConcerne($db, $type_id)
+	{
+		$type_id = (int) $type_id;
+		if ($type_id <= 0) {
+			return false;
+		}
+		foreach (explode(',', getDolGlobalString('SMS123_RDV_TYPES')) as $t) {
+			if ((int) trim($t) === $type_id) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Choix enregistre sur la fiche d'un evenement.
+	 *
+	 * @param DoliDB $db base
+	 * @param int    $id evenement
+	 * @return int|null  null = aucun choix (comportement automatique), 0 ou 1
+	 */
+	public static function forcageEvenement($db, $id)
+	{
+		$id = (int) $id;
+		if ($id <= 0) {
+			return null;
+		}
+		$resql = $db->query('SELECT actif FROM '.MAIN_DB_PREFIX.'sms123_rdv WHERE fk_actioncomm = '.$id);
+		if (!$resql) {
+			return null;
+		}
+		$valeur = null;
+		if ($obj = $db->fetch_object($resql)) {
+			$valeur = (int) $obj->actif;
+		}
+		$db->free($resql);
+
+		return $valeur;
+	}
+
+	/**
+	 * Enregistre un choix explicite pour un evenement.
+	 *
+	 * @param DoliDB $db     base
+	 * @param int    $id     evenement
+	 * @param int    $valeur 1 = envoyer, 0 = ne pas envoyer
+	 * @return int
+	 */
+	public static function enregistrerForcage($db, $id, $valeur)
+	{
+		global $conf;
+
+		$id = (int) $id;
+		if ($id <= 0) {
+			return -1;
+		}
+		self::supprimerForcage($db, $id);
+
+		$sql = 'INSERT INTO '.MAIN_DB_PREFIX.'sms123_rdv(fk_actioncomm, entity, actif, datec)';
+		$sql .= ' VALUES ('.$id.', '.((int) $conf->entity).', '.($valeur ? 1 : 0).", '".$db->idate(dol_now())."')";
+
+		if (!$db->query($sql)) {
+			dol_syslog('Sms123Cron::enregistrerForcage '.$db->lasterror(), LOG_WARNING);
+			return -1;
+		}
+
+		return 1;
+	}
+
+	/** Revient au comportement automatique pour un evenement. */
+	public static function supprimerForcage($db, $id)
+	{
+		$id = (int) $id;
+		if ($id <= 0) {
+			return -1;
+		}
+
+		return $db->query('DELETE FROM '.MAIN_DB_PREFIX.'sms123_rdv WHERE fk_actioncomm = '.$id) ? 1 : -1;
 	}
 
 	/**

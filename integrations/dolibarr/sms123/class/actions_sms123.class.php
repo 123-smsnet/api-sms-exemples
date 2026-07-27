@@ -16,6 +16,8 @@ class ActionsSms123
 	const FICHES = 'thirdpartycard,contactcard,propalcard,ordercard,invoicecard,expeditioncard';
 	/** Contextes ou l'action de masse est proposee. */
 	const LISTES = 'thirdpartylist,contactlist';
+	/** Contexte de la fiche d'un evenement d'agenda. */
+	const FICHE_EVENEMENT = 'actioncard';
 
 	public function __construct($db)
 	{
@@ -85,6 +87,72 @@ class ActionsSms123
 
 		$this->resprints = '<option value="sms123_masse">'
 			.dol_escape_htmltag($langs->transnoentities('Sms123MassAction')).'</option>';
+
+		return 0;
+	}
+
+	/**
+	 * Case « Rappel SMS » sur la fiche d'un evenement d'agenda.
+	 *
+	 * - en creation : case a cocher pour forcer l'envoi (le comportement par
+	 *   defaut suivra le type choisi) ;
+	 * - en modification : case cochee selon l'etat effectif de l'evenement ;
+	 *   la decocher ecarte ce rendez-vous, la cocher l'inclut meme si son
+	 *   type n'est pas concerne ;
+	 * - en consultation : etat effectif et origine du choix.
+	 *
+	 * Renvoie toujours 0 : Dolibarr continue d'afficher les attributs
+	 * supplementaires de la fiche apres notre ligne.
+	 *
+	 * @param array  $parameters  contexte du hook
+	 * @param object $object      evenement affiche
+	 * @param string $action      action en cours (create, edit, ou vue)
+	 * @param object $hookmanager gestionnaire de hooks
+	 * @return int
+	 */
+	public function formObjectOptions($parameters, &$object, &$action, $hookmanager)
+	{
+		global $langs;
+
+		if (!$this->autorise() || !$this->contexte($parameters, self::FICHE_EVENEMENT)) {
+			return 0;
+		}
+		// Rien a proposer tant que les rappels ne sont pas actives
+		if (!getDolGlobalString('SMS123_RDV_ACTIF')) {
+			return 0;
+		}
+
+		dol_include_once('/sms123/class/sms123api.class.php');
+		dol_include_once('/sms123/class/sms123cron.class.php');
+		Sms123Api::langs();
+
+		$type = empty($object->type_id) ? 0 : (int) $object->type_id;
+		$auto = Sms123Cron::typeConcerne($this->db, $type) ? 1 : 0;
+		$forcage = empty($object->id) ? null : Sms123Cron::forcageEvenement($this->db, $object->id);
+		$effectif = ($forcage === null) ? $auto : $forcage;
+
+		$libelle = $langs->transnoentities('Sms123RdvCardLabel');
+
+		if ($action == 'create' || $action == 'edit') {
+			$coche = ($action == 'create') ? 0 : $effectif;
+			$aide = ($action == 'create') ? 'Sms123RdvCardHintCreate' : 'Sms123RdvCardHint';
+			$this->resprints = '<tr><td>'.$libelle.'</td><td colspan="3">'
+				.'<input type="hidden" name="sms123_rappel_present" value="1">'
+				.'<label><input type="checkbox" name="sms123_rappel" value="1"'.($coche ? ' checked' : '').'> '
+				.$langs->transnoentities('Sms123RdvCardSend').'</label>'
+				.'<br><span class="opacitymedium">'.$langs->transnoentities($aide).'</span>'
+				.'</td></tr>';
+
+			return 0;
+		}
+
+		// consultation
+		$this->resprints = '<tr><td>'.$libelle.'</td><td colspan="3">'
+			.'<b style="color:'.($effectif ? '#268614' : '#c83232').'">'
+			.$langs->transnoentities($effectif ? 'Sms123RdvCardYes' : 'Sms123RdvCardNo').'</b>'
+			.' <span class="opacitymedium">&mdash; '
+			.$langs->transnoentities($forcage === null ? 'Sms123RdvCardByType' : 'Sms123RdvCardOwn')
+			.'</span></td></tr>';
 
 		return 0;
 	}

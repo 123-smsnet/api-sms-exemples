@@ -24,7 +24,7 @@ class modSms123 extends DolibarrModules
 			.'reutilisable dans vos propres scripts.';
 		$this->editor_name = '123-SMS.net';
 		$this->editor_url = 'https://www.123-sms.net';
-		$this->version = '2.2.5';
+		$this->version = '2.3.0';
 		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
 		$this->picto = 'phone';
 		$this->config_page_url = array('setup.php@sms123');
@@ -34,6 +34,7 @@ class modSms123 extends DolibarrModules
 				'thirdpartycard', 'contactcard', 'propalcard', 'ordercard',
 				'invoicecard', 'expeditioncard',
 				'thirdpartylist', 'contactlist',
+				'actioncard',
 			),
 		);
 

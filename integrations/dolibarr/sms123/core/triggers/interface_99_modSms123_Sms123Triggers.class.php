@@ -13,7 +13,7 @@ class InterfaceSms123Triggers extends DolibarrTriggers
 		$this->name = preg_replace('/^Interface/i', '', get_class($this));
 		$this->family = 'demo';
 		$this->description = 'Envoi de SMS via 123-SMS.net sur les evenements Dolibarr';
-		$this->version = '2.2.5';
+		$this->version = '2.3.0';
 		$this->picto = 'phone';
 	}
 
@@ -44,6 +44,12 @@ class InterfaceSms123Triggers extends DolibarrTriggers
 		if (!isModEnabled('sms123')) {
 			return 0;
 		}
+
+		// Case « Rappel SMS » de la fiche d'un evenement d'agenda
+		if (in_array($action, array('ACTION_CREATE', 'ACTION_MODIFY', 'ACTION_DELETE'), true)) {
+			return $this->choixRappel($action, $object);
+		}
+
 		if (!array_key_exists($action, self::evenements())) {
 			return 0;
 		}
@@ -81,5 +87,56 @@ class InterfaceSms123Triggers extends DolibarrTriggers
 		dol_syslog('Sms123 trigger '.$action.' -> '.$code, LOG_INFO);
 
 		return 1;
+	}
+
+	/**
+	 * Enregistre le choix « Rappel SMS » saisi sur la fiche d'un evenement.
+	 *
+	 * Une ligne n'est ecrite QUE si l'utilisateur s'ecarte du comportement
+	 * automatique (type de l'evenement coche dans la configuration) ; s'il
+	 * revient dessus, la ligne est supprimee. La fiche reste donc alignee sur
+	 * la configuration tant que personne ne decide autrement.
+	 *
+	 * @param string $action code du declencheur
+	 * @param object $object evenement d'agenda
+	 * @return int
+	 */
+	protected function choixRappel($action, $object)
+	{
+		if (empty($object->id)) {
+			return 0;
+		}
+		dol_include_once('/sms123/class/sms123cron.class.php');
+
+		if ($action == 'ACTION_DELETE') {
+			Sms123Cron::supprimerForcage($this->db, $object->id);
+			return 0;
+		}
+
+		// Notre case n'etait pas dans le formulaire (evenement cree par un
+		// autre module, un import, l'API...) : on ne touche a rien.
+		if (!GETPOST('sms123_rappel_present', 'int')) {
+			return 0;
+		}
+
+		$coche = GETPOST('sms123_rappel', 'int') ? 1 : 0;
+		$auto = Sms123Cron::typeConcerne($this->db, empty($object->type_id) ? 0 : $object->type_id) ? 1 : 0;
+
+		// A la creation, le type n'etait pas connu au moment de l'affichage :
+		// la case ne sert donc qu'a forcer l'envoi, jamais a l'interdire.
+		if ($action == 'ACTION_CREATE') {
+			if ($coche && !$auto) {
+				Sms123Cron::enregistrerForcage($this->db, $object->id, 1);
+			}
+			return 0;
+		}
+
+		if ($coche == $auto) {
+			Sms123Cron::supprimerForcage($this->db, $object->id);
+		} else {
+			Sms123Cron::enregistrerForcage($this->db, $object->id, $coche);
+		}
+
+		return 0;
 	}
 }

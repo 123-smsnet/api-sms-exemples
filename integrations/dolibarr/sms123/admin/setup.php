@@ -277,6 +277,8 @@ if ($onglet == 'rappels') {
 		.$langs->transnoentities('Sms123Hours').' <span class="opacitymedium">'.$langs->transnoentities('Sms123RdvDelayHint').'</span></td></tr>';
 	print '<tr class="oddeven"><td>'.$langs->transnoentities('Sms123RdvSource').'</td><td class="opacitymedium">'
 		.$langs->transnoentities('Sms123RdvFields').'</td></tr>';
+	print '<tr class="oddeven"><td>'.$langs->transnoentities('Sms123RdvCardLabel').'</td><td class="opacitymedium">'
+		.$langs->transnoentities('Sms123RdvCardInfo').'</td></tr>';
 	$tplrdv = getDolGlobalString('SMS123_RDV_TPL');
 	print '<tr class="oddeven"><td>'.$langs->transnoentities('Sms123Message').'</td><td>'
 		.'<input type="text" name="rdv_tpl" class="quatrevingtpercent" value="'
@@ -353,7 +355,11 @@ if ($onglet == 'rappels') {
 				print '<td>'.dol_escape_htmltag($ligne['societe']).'</td>';
 				print '<td>'.dol_escape_htmltag($ligne['numero']).'</td>';
 				print '<td class="opacitymedium">'.dol_escape_htmltag($ligne['source']).'</td>';
-				print '<td style="color:'.$couleur.'">'.$langs->transnoentities($cleetat).'</td>';
+				print '<td style="color:'.$couleur.'">'.$langs->transnoentities($cleetat);
+				if (!empty($ligne['forcage'])) {
+					print ' <span class="opacitymedium">('.$langs->transnoentities('Sms123RdvForced').')</span>';
+				}
+				print '</td>';
 				print '</tr>';
 			}
 			print '</table>';

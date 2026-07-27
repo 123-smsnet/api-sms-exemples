@@ -63,6 +63,14 @@ Le module fournit deux taches planifiees, desactivees par defaut :
   l evenement que dans ses ressources (ou Dolibarr enregistre les
   contacts depuis la version 9).
 
+  CAS PAR CAS : chaque fiche d evenement porte une case « Rappel SMS ».
+  Elle est cochee d office quand le type de l evenement est concerne :
+  la decocher ecarte ce rendez-vous precis. A l inverse, la cocher sur un
+  evenement dont le type n est pas coche dans la configuration envoie
+  quand meme le rappel. Tant que personne ne la modifie, la fiche suit
+  la configuration : rien n est enregistre en base. Revenir a l etat
+  d origine efface le choix particulier.
+
   Le bouton « Tester la selection » de la configuration affiche, sans
   rien envoyer, la liste exacte des evenements concernes en ce moment,
   le numero trouve pour chacun, le champ d ou il vient et son etat
