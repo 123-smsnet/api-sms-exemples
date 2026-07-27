@@ -30,7 +30,7 @@ class box_sms123 extends ModeleBoxes
 		$langs->load('sms123@sms123');
 		$this->db = $db;
 		$this->param = $param;
-		$this->boxlabel = $langs->trans('Sms123BoxTitle');
+		$this->boxlabel = $langs->transnoentities('Sms123BoxTitle');
 	}
 
 	/**
@@ -46,12 +46,12 @@ class box_sms123 extends ModeleBoxes
 		$this->max = $max;
 		dol_include_once('/sms123/class/sms123api.class.php');
 
-		$this->info_box_head = array('text' => $langs->trans('Sms123BoxTitle'));
+		$this->info_box_head = array('text' => $langs->transnoentities('Sms123BoxTitle'));
 
 		if (!$user->hasRight('sms123', 'envoyer')) {
 			$this->info_box_contents[0][0] = array(
 				'td' => 'class="left opacitymedium"',
-				'text' => $langs->trans('Sms123BoxNone'),
+				'text' => $langs->transnoentities('Sms123BoxNone'),
 			);
 			return;
 		}
@@ -62,14 +62,14 @@ class box_sms123 extends ModeleBoxes
 		$solde = Sms123Api::soldeCache(900);
 		$this->info_box_contents[$ligne][0] = array(
 			'td' => 'class="left"',
-			'text' => '<b>'.$langs->trans('Sms123Balance').'</b>',
+			'text' => '<b>'.$langs->transnoentities('Sms123Balance').'</b>',
 		);
 		$this->info_box_contents[$ligne][1] = array(
 			'td' => 'class="right"',
 			'text' => ($solde === null
-				? '<span class="opacitymedium">'.$langs->trans('Sms123BalanceUnavailable').'</span>'
+				? '<span class="opacitymedium">'.$langs->transnoentities('Sms123BalanceUnavailable').'</span>'
 				: '<b style="color:'.($solde < 20 ? '#c83232' : '#268614').'">'
-					.price2num($solde, 'MT').' '.$langs->trans('Sms123SmsUnit').'</b>'),
+					.price2num($solde, 'MT').' '.$langs->transnoentities('Sms123SmsUnit').'</b>'),
 		);
 		$ligne++;
 
@@ -99,7 +99,7 @@ class box_sms123 extends ModeleBoxes
 		} else {
 			$this->info_box_contents[$ligne][0] = array(
 				'td' => 'class="left opacitymedium"',
-				'text' => $langs->trans('Sms123BoxNone'),
+				'text' => $langs->transnoentities('Sms123BoxNone'),
 			);
 			$this->info_box_contents[$ligne][1] = array('td' => '', 'text' => '');
 			$ligne++;
@@ -109,12 +109,12 @@ class box_sms123 extends ModeleBoxes
 		$this->info_box_contents[$ligne][0] = array(
 			'td' => 'class="left"',
 			'text' => '<a href="'.dol_buildpath('/sms123/sms123index.php', 1).'">'
-				.$langs->trans('Sms123BoxSendOne').'</a>',
+				.$langs->transnoentities('Sms123BoxSendOne').'</a>',
 		);
 		$this->info_box_contents[$ligne][1] = array(
 			'td' => 'class="right"',
 			'text' => '<a href="'.dol_buildpath('/sms123/sms123masse.php', 1).'">'
-				.$langs->trans('Sms123MassLink').'</a>',
+				.$langs->transnoentities('Sms123MassLink').'</a>',
 		);
 	}
 

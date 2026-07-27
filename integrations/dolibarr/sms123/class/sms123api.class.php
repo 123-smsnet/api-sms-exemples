@@ -28,7 +28,7 @@ class Sms123Api
 	{
 		$langs = self::langs();
 		if (is_object($langs)) {
-			return $langs->trans($cle, $a, $b);
+			return $langs->transnoentities($cle, $a, $b);
 		}
 
 		return $cle;

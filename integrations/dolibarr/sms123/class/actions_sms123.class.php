@@ -53,10 +53,10 @@ class ActionsSms123
 
 		if (empty($numero)) {
 			print '<span class="butActionRefused classfortooltip" title="'
-				.dol_escape_htmltag($langs->trans('Sms123MassNoNumber')).'">'
-				.$langs->trans('Sms123BoxSendOne').'</span>';
+				.dol_escape_htmltag($langs->transnoentities('Sms123MassNoNumber')).'">'
+				.$langs->transnoentities('Sms123BoxSendOne').'</span>';
 		} else {
-			print '<a class="butAction" href="'.$url.'">'.$langs->trans('Sms123BoxSendOne').'</a>';
+			print '<a class="butAction" href="'.$url.'">'.$langs->transnoentities('Sms123BoxSendOne').'</a>';
 		}
 
 		return 0;
@@ -84,7 +84,7 @@ class ActionsSms123
 		Sms123Api::langs();
 
 		$this->resprints = '<option value="sms123_masse">'
-			.dol_escape_htmltag($langs->trans('Sms123MassAction')).'</option>';
+			.dol_escape_htmltag($langs->transnoentities('Sms123MassAction')).'</option>';
 
 		return 0;
 	}

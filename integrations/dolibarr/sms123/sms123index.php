@@ -27,7 +27,7 @@ if ($action == 'send') {
 	$numero = GETPOST('numero', 'alphanohtml');
 	$message = GETPOST('message', 'restricthtml');
 	if (empty($numero) || empty($message)) {
-		setEventMessages($langs->trans('Sms123NeedRecipientAndMessage'), null, 'errors');
+		setEventMessages($langs->transnoentities('Sms123NeedRecipientAndMessage'), null, 'errors');
 	} else {
 		$code = Sms123Api::envoyer($numero, $message, 0, 'manuel', $socid);
 		$ok = in_array($code, array('80', '81'), true);
@@ -37,33 +37,33 @@ if ($action == 'send') {
 	exit;
 }
 
-llxHeader('', $langs->trans('Sms123SendTitle'));
+llxHeader('', $langs->transnoentities('Sms123SendTitle'));
 
 // --------------------------------------------------- solde du compte
 $solde = Sms123Api::solde();
 $couleur = ($solde !== null && $solde < 20) ? '#c83232' : '#268614';
 print '<div class="center" style="margin:6px 0 14px;">';
 print '<span style="display:inline-block; padding:8px 18px; border-radius:6px; border:1px solid #c9e6f2; background:#f2faff;">';
-print '<b>'.$langs->trans('Sms123Balance').' :</b> ';
+print '<b>'.$langs->transnoentities('Sms123Balance').' :</b> ';
 if ($solde === null) {
-	print '<span class="opacitymedium">'.$langs->trans('Sms123BalanceUnavailable').'</span>';
+	print '<span class="opacitymedium">'.$langs->transnoentities('Sms123BalanceUnavailable').'</span>';
 } else {
-	print '<b style="color:'.$couleur.'">'.price2num($solde, 'MT').' '.$langs->trans('Sms123SmsUnit').'</b>';
+	print '<b style="color:'.$couleur.'">'.price2num($solde, 'MT').' '.$langs->transnoentities('Sms123SmsUnit').'</b>';
 	if ($solde < 20) {
-		print ' <span style="color:#c83232">('.$langs->trans('Sms123TopUpAdvice').')</span>';
+		print ' <span style="color:#c83232">('.$langs->transnoentities('Sms123TopUpAdvice').')</span>';
 	}
 }
-print ' &nbsp;&mdash;&nbsp; <a href="https://www.123-sms.net/" target="_blank" rel="noopener">'.$langs->trans('Sms123CustomerArea').'</a>';
+print ' &nbsp;&mdash;&nbsp; <a href="https://www.123-sms.net/" target="_blank" rel="noopener">'.$langs->transnoentities('Sms123CustomerArea').'</a>';
 print '</span></div>';
 
 // Roue crantee vers la configuration (administrateurs)
 $lienconfig = '';
 if (!empty($user->admin)) {
 	$lienconfig = '<a class="valignmiddle" href="'.dol_buildpath('/sms123/admin/setup.php', 1)
-		.'?backtopage='.urlencode($_SERVER['PHP_SELF']).'" title="'.dol_escape_htmltag($langs->trans('Sms123ConfigLink')).'">'
-		.img_picto($langs->trans('Sms123ConfigLink'), 'setup', 'class="pictofixedwidth"').'</a>';
+		.'?backtopage='.urlencode($_SERVER['PHP_SELF']).'" title="'.dol_escape_htmltag($langs->transnoentities('Sms123ConfigLink')).'">'
+		.img_picto($langs->transnoentities('Sms123ConfigLink'), 'setup', 'class="pictofixedwidth"').'</a>';
 }
-print load_fiche_titre($langs->trans('Sms123SendTitle'), $lienconfig, 'object_phoning');
+print load_fiche_titre($langs->transnoentities('Sms123SendTitle'), $lienconfig, 'object_phoning');
 
 // --------------------------------------------------- formulaire
 print '<form method="POST" action="'.$_SERVER['PHP_SELF'].'">';
@@ -71,21 +71,21 @@ print '<input type="hidden" name="token" value="'.newToken().'">';
 print '<input type="hidden" name="action" value="send">';
 print '<input type="hidden" name="socid" value="'.((int) $socid).'">';
 print '<table class="noborder centpercent">';
-print '<tr class="liste_titre"><td colspan="2">'.$langs->trans('Sms123NewMessage').'</td></tr>';
-print '<tr class="oddeven"><td class="titlefield"><label for="sms123numero">'.$langs->trans('Sms123Recipients').'</label></td><td>'
+print '<tr class="liste_titre"><td colspan="2">'.$langs->transnoentities('Sms123NewMessage').'</td></tr>';
+print '<tr class="oddeven"><td class="titlefield"><label for="sms123numero">'.$langs->transnoentities('Sms123Recipients').'</label></td><td>'
 	.'<input type="text" id="sms123numero" name="numero" size="40" value="'.dol_escape_htmltag($prenumero).'" placeholder="'
-	.dol_escape_htmltag($langs->trans('Sms123RecipientsHint')).'"'.(empty($prenumero) ? ' autofocus' : '').'></td></tr>';
-print '<tr class="oddeven"><td><label for="sms123message">'.$langs->trans('Sms123Message').'</label></td><td>'
+	.dol_escape_htmltag($langs->transnoentities('Sms123RecipientsHint')).'"'.(empty($prenumero) ? ' autofocus' : '').'></td></tr>';
+print '<tr class="oddeven"><td><label for="sms123message">'.$langs->transnoentities('Sms123Message').'</label></td><td>'
 	.'<textarea id="sms123message" name="message" rows="4" cols="60" maxlength="480">'.dol_escape_htmltag($premessage).'</textarea>'
-	.'<br><span id="sms123compteur" class="opacitymedium">'.$langs->trans('Sms123CounterHint').'</span></td></tr>';
+	.'<br><span id="sms123compteur" class="opacitymedium">'.$langs->transnoentities('Sms123CounterHint').'</span></td></tr>';
 print '</table><br>';
-print '<div class="center"><input type="submit" class="button" value="'.dol_escape_htmltag($langs->trans('Sms123SendButton')).'">';
-print ' &nbsp; <a class="butAction" href="'.dol_buildpath('/sms123/sms123masse.php', 1).'">'.$langs->trans('Sms123MassLink').'</a></div>';
+print '<div class="center"><input type="submit" class="button" value="'.dol_escape_htmltag($langs->transnoentities('Sms123SendButton')).'">';
+print ' &nbsp; <a class="butAction" href="'.dol_buildpath('/sms123/sms123masse.php', 1).'">'.$langs->transnoentities('Sms123MassLink').'</a></div>';
 print '</form>';
 
 // --------------------------------------------------- historique
 print '<br>';
-print load_fiche_titre($langs->trans('Sms123History'), '', 'generic');
+print load_fiche_titre($langs->transnoentities('Sms123History'), '', 'generic');
 
 $ar = getDolGlobalString('SMS123_AR_ACTIF');
 
@@ -98,12 +98,12 @@ $resql = $db->query($sql);
 
 print '<table class="noborder centpercent">';
 print '<tr class="liste_titre">';
-print '<td>'.$langs->trans('Sms123Date').'</td><td>'.$langs->trans('Sms123Recipient').'</td>';
-print '<td>'.$langs->trans('Sms123Message').'</td><td>'.$langs->trans('Sms123Result').'</td>';
+print '<td>'.$langs->transnoentities('Sms123Date').'</td><td>'.$langs->transnoentities('Sms123Recipient').'</td>';
+print '<td>'.$langs->transnoentities('Sms123Message').'</td><td>'.$langs->transnoentities('Sms123Result').'</td>';
 if ($ar) {
-	print '<td>'.$langs->trans('Sms123Status').'</td>';
+	print '<td>'.$langs->transnoentities('Sms123Status').'</td>';
 }
-print '<td>'.$langs->trans('Sms123Origin').'</td>';
+print '<td>'.$langs->transnoentities('Sms123Origin').'</td>';
 print '</tr>';
 if ($resql && $db->num_rows($resql) > 0) {
 	while ($obj = $db->fetch_object($resql)) {
@@ -129,13 +129,13 @@ if ($resql && $db->num_rows($resql) > 0) {
 	}
 } else {
 	print '<tr class="oddeven"><td colspan="'.($ar ? 6 : 5).'" class="opacitymedium center">'
-		.$langs->trans('Sms123NoHistory').'</td></tr>';
+		.$langs->transnoentities('Sms123NoHistory').'</td></tr>';
 }
 print '</table>';
 
-print '<br><div class="opacitymedium">'.$langs->trans('Sms123DevTip')
+print '<br><div class="opacitymedium">'.$langs->transnoentities('Sms123DevTip')
 	.' <code>dol_include_once(\'/sms123/class/sms123api.class.php\'); Sms123Api::envoyer($numero, $message);</code><br>'
-	.$langs->trans('Sms123DevTipTriggers').'</div>';
+	.$langs->transnoentities('Sms123DevTipTriggers').'</div>';
 
 // Compteur de caracteres : nombre de SMS et alerte Unicode.
 // Les caracteres GSM non ASCII sont ecrits en echappement \uXXXX pour que
@@ -145,9 +145,9 @@ print '<script>
 	var zone = document.getElementById("sms123message");
 	var info = document.getElementById("sms123compteur");
 	if (!zone || !info) { return; }
-	var motChars = '.json_encode(dol_html_entity_decode($langs->trans('Sms123Chars'), ENT_QUOTES)).';
-	var motSms = '.json_encode($langs->trans('Sms123SmsUnit')).';
-	var motUnicode = '.json_encode(dol_html_entity_decode($langs->trans('Sms123UnicodeWarning'), ENT_QUOTES)).';
+	var motChars = '.json_encode($langs->transnoentities('Sms123Chars')).';
+	var motSms = '.json_encode($langs->transnoentities('Sms123SmsUnit')).';
+	var motUnicode = '.json_encode($langs->transnoentities('Sms123UnicodeWarning')).';
 	var gsm = /[^A-Za-z0-9 @\u00A3$\u00A5\u00E8\u00E9\u00F9\u00EC\u00F2\u00C7\u00D8\u00F8\u00C5\u00E5\u00C6\u00E6\u00DF\u00C9!\"#%&\'()*+,\-.\/:;<=>?_\u00A1\u00BF\u00A7\u00C4\u00D6\u00D1\u00DC\u00E4\u00F6\u00F1\u00FC\u00E0\r\n]/;
 	function compter() {
 		var texte = zone.value;
