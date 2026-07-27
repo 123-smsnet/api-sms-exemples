@@ -13,19 +13,19 @@ class InterfaceSms123Triggers extends DolibarrTriggers
 		$this->name = preg_replace('/^Interface/i', '', get_class($this));
 		$this->family = 'demo';
 		$this->description = 'Envoi de SMS via 123-SMS.net sur les evenements Dolibarr';
-		$this->version = '2.0.0';
+		$this->version = '2.2.0';
 		$this->picto = 'phone';
 	}
 
-	/** Evenements pris en charge : code Dolibarr => libelle affiche. */
+	/** Evenements pris en charge : code Dolibarr => cle de traduction. */
 	public static function evenements()
 	{
 		return array(
-			'ORDER_VALIDATE' => 'Commande valid&eacute;e',
-			'BILL_VALIDATE' => 'Facture valid&eacute;e',
-			'BILL_PAYED' => 'Facture pay&eacute;e',
-			'SHIPPING_VALIDATE' => 'Exp&eacute;dition valid&eacute;e',
-			'PROPAL_VALIDATE' => 'Devis valid&eacute;',
+			'ORDER_VALIDATE' => 'Sms123EvORDER_VALIDATE',
+			'BILL_VALIDATE' => 'Sms123EvBILL_VALIDATE',
+			'BILL_PAYED' => 'Sms123EvBILL_PAYED',
+			'SHIPPING_VALIDATE' => 'Sms123EvSHIPPING_VALIDATE',
+			'PROPAL_VALIDATE' => 'Sms123EvPROPAL_VALIDATE',
 		);
 	}
 
@@ -59,12 +59,15 @@ class InterfaceSms123Triggers extends DolibarrTriggers
 		}
 		$destinataire = getDolGlobalString('SMS123_DEST_'.$action);
 
+		if (method_exists($object, 'fetch_thirdparty')) {
+			$object->fetch_thirdparty();
+		}
+		$socid = empty($object->thirdparty->id) ? 0 : (int) $object->thirdparty->id;
+
 		if ($destinataire === 'admin') {
 			$numero = getDolGlobalString('SMS123_NUM_ADMIN');
+			$socid = 0; // alerte interne : rien a tracer sur la fiche client
 		} else {
-			if (method_exists($object, 'fetch_thirdparty')) {
-				$object->fetch_thirdparty();
-			}
 			$numero = Sms123Api::numeroTiers(empty($object->thirdparty) ? null : $object->thirdparty);
 		}
 
@@ -74,7 +77,7 @@ class InterfaceSms123Triggers extends DolibarrTriggers
 		}
 
 		$message = Sms123Api::appliquerModele($modele, $object);
-		$code = Sms123Api::envoyer($numero, $message, 0, 'trigger '.$action);
+		$code = Sms123Api::envoyer($numero, $message, 0, 'trigger '.$action, $socid);
 		dol_syslog('Sms123 trigger '.$action.' -> '.$code, LOG_INFO);
 
 		return 1;

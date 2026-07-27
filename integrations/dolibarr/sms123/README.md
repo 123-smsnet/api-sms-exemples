@@ -9,14 +9,16 @@ Contenu
 -------
 - Page « Outils > SMS 123-SMS » : envoi manuel (un ou plusieurs
   destinataires, numeros francais normalises automatiquement) ;
+- Envoi en masse depuis les listes de tiers et de contacts ;
 - Classe Sms123Api reutilisable dans vos triggers, crons et scripts :
     dol_include_once('/sms123/class/sms123api.class.php');
     $code = Sms123Api::envoyer('0601020304', 'Votre commande est prete.');
 - Permission dediee « Envoyer des SMS via 123-SMS » ;
+- Interface en francais et en anglais (fr_FR, en_US) ;
 - Proxy de l'instance respecte (client HTTP natif Dolibarr).
 
-Quatre facons d'envoyer des SMS depuis Dolibarr
-----------------------------------------------
+Cinq facons d'envoyer des SMS depuis Dolibarr
+---------------------------------------------
 1. A LA MAIN : menu Outils > SMS 123-SMS. La page affiche le solde du
    compte, envoie a un ou plusieurs destinataires, et conserve
    l'historique des envois (le formulaire se vide apres chaque envoi).
@@ -29,7 +31,16 @@ Quatre facons d'envoyer des SMS depuis Dolibarr
 3. DEPUIS LES FICHES : un bouton « Envoyer un SMS » apparait sur les
    fiches tiers, contact, devis, commande, facture et expedition. Le
    numero et un message contextuel sont pre-remplis.
-4. SUR MESURE : une ligne dans vos scripts, triggers ou crons :
+4. EN MASSE : sur la liste des tiers ou des contacts, filtrez, cochez
+   les lignes puis choisissez l'action de masse « Envoyer un SMS
+   (123-SMS) ». La page d'envoi en masse recapitule les destinataires
+   joignables, signale ceux qui n'ont pas de numero, accepte des
+   numeros libres en complement et propose un envoi a blanc. Les
+   variables {societe} {contact} {masociete} personnalisent chaque
+   message ; sans variable, les numeros sont regroupes par paquets de
+   20 pour accelerer l'envoi. Limite : 500 destinataires par envoi.
+   La page est aussi accessible par Outils > SMS 123-SMS > Envoi en masse.
+5. SUR MESURE : une ligne dans vos scripts, triggers ou crons :
       dol_include_once('/sms123/class/sms123api.class.php');
       $code = Sms123Api::envoyer('0601020304', 'Bonjour !');
 
@@ -48,16 +59,53 @@ Le module fournit deux taches planifiees, desactivees par defaut :
   minimum entre deux relances de la meme facture.
   Variables : {ref} {total} {date} {societe} {masociete}.
 
+- ALERTE DE SOLDE BAS : lorsque le credit passe sous le seuil que vous
+  fixez, le module previent par e-mail (et par SMS sur votre numero
+  interne si vous le souhaitez), sans repeter l alerte plus d une fois
+  tous les X jours.
+
 Mise en service :
 1. Configuration du module : activez la fonction, choisissez les types
    d evenements / les delais, adaptez les messages ;
-2. Accueil > Configuration > Taches planifiees : activez les deux
-   lignes « 123-SMS » (elles sont creees a l installation du module) ;
+2. Accueil > Configuration > Taches planifiees : activez les lignes
+   « 123-SMS » (elles sont creees a l installation du module) ;
 3. Le cron de Dolibarr doit lui-meme etre en service cote serveur
    (ligne crontab appelant scripts/cron/cron_run_jobs.php).
 
 Chaque envoi automatique est trace dans l historique avec son origine
-(rappel-rdv#123, relance-facture#456).
+(rappel-rdv#123, relance-facture#456, masse, alerte-solde).
+
+Accuses de reception
+--------------------
+Option « Demander les accuses de reception » (configuration, section
+Options avancees) : chaque SMS part alors avec &refaccuse=o et la
+passerelle rappelle ensuite votre Dolibarr pour indiquer si le message
+a ete remis. Le statut (Remis / Non remis / En attente) apparait dans
+une colonne supplementaire de l historique.
+
+Deux conditions :
+1. cochez l option dans la configuration du module ;
+2. communiquez a 123-SMS l URL de retour affichee juste en dessous
+   (documentation « Retour des accuses de reception par http »).
+
+L URL de retour est publique par nature : elle n accepte que la mise a
+jour d un envoi deja enregistre, ne cree jamais de donnee et ne
+declenche aucun envoi. Une cle de securite facultative peut etre
+ajoutee : les appels qui ne la portent pas sont alors refuses.
+
+Trace dans l agenda du client
+-----------------------------
+Option « Tracer les SMS dans l agenda du client » : chaque SMS lie a un
+tiers cree un evenement sur sa fiche (libelle « SMS envoye au ... »,
+texte complet en note privee). L historique client devient complet, et
+le SMS se retrouve dans les rapports d activite habituels de Dolibarr.
+
+Widget d accueil
+----------------
+Un widget « SMS 123-SMS.net » affiche le solde du compte et les
+derniers envois des la connexion. Activez-le dans Accueil >
+Configuration > Widgets. Le solde y est mis en cache 15 minutes : la
+page d accueil ne declenche pas un appel API a chaque affichage.
 
 Compteur de caracteres
 ----------------------
@@ -119,7 +167,17 @@ Le module n'apparait pas dans la liste ?
 4. Cache : Accueil > Configuration > Divers > « Purger le cache »,
    ou supprimez le contenu de documents/admin/temp/, puis rechargez.
 5. Hebergement mutualise : verifiez que le transfert FTP est
-   complet (6 fichiers) et n'a pas ete interrompu.
+   complet (12 fichiers) et n'a pas ete interrompu.
+
+Mise a jour depuis une version anterieure
+-----------------------------------------
+Remplacez les fichiers, puis DESACTIVEZ et REACTIVEZ le module dans
+Configuration > Modules. La reactivation ajoute a la table
+d historique les colonnes des nouvelles fonctions (tiers, reference,
+statut de remise), cree la tache planifiee d alerte de solde, le
+widget d accueil et l entree de menu « Envoi en masse ». Vos reglages
+(identifiant, cle API, declencheurs, rappels) sont conserves, ainsi
+que l historique deja enregistre.
 
 Tester la connexion
 -------------------

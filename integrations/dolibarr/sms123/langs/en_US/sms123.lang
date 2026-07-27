@@ -1,0 +1,197 @@
+# en_US translation of the 123-SMS module - MIT licence
+Module500123Name=SMS 123-SMS.net
+Module500123Desc=Send business SMS through 123-SMS.net
+Sms123Menu=SMS 123-SMS
+Sms123MenuMass=Bulk sending
+Sms123BoxTitle=SMS 123-SMS.net
+Permission50012301=Send SMS through 123-SMS
+
+# --- common
+Sms123Balance=123-SMS.net balance
+Sms123BalanceUnavailable=unavailable
+Sms123SmsUnit=SMS
+Sms123TopUpAdvice=consider topping up
+Sms123TopUp=top up
+Sms123CustomerArea=customer area
+Sms123ConfigLink=123-SMS module setup
+Sms123Date=Date
+Sms123Recipient=Recipient
+Sms123Message=Message
+Sms123Result=Result
+Sms123Origin=Origin
+Sms123Status=Delivery
+Sms123Save=Save
+
+# --- sending page
+Sms123SendTitle=Send an SMS through 123-SMS.net
+Sms123NewMessage=New message
+Sms123Recipients=Recipient(s)
+Sms123RecipientsHint=33601020304 (several: separated by -)
+Sms123CounterHint=160 GSM characters per SMS (longer messages are billed per segment).
+Sms123SendButton=Send the SMS
+Sms123NeedRecipientAndMessage=Please fill in a recipient and a message.
+Sms123History=Sending history
+Sms123NoHistory=No SMS sent yet.
+Sms123DevTip=Developer tip: the <b>Sms123Api</b> class can be reused anywhere.
+Sms123DevTipTriggers=For automatic sending without any code, enable the <b>triggers</b> in the module setup.
+Sms123MassLink=Bulk sending
+Sms123Chars=characters
+Sms123UnicodeWarning=(special characters: 70 characters per SMS)
+
+# --- delivery status
+Sms123Delivered=Delivered
+Sms123NotDelivered=Not delivered
+Sms123Pending=Pending
+Sms123NoReceipt=-
+
+# --- API return codes
+Sms123Code80=The message has been sent.
+Sms123Code81=Registered for deferred sending.
+Sms123Code82=Invalid login and/or API key.
+Sms123Code83=Not enough credit: please top up your account.
+Sms123Code84=Invalid mobile number.
+Sms123Code91=Duplicate: the same message was already sent to this number within 24 h.
+Sms123Code97=Invalid or undeclared Sender ID.
+Sms123CodeOther=Return code: %s
+Sms123NotConfigured=module not configured (Setup &rsaquo; Modules &rsaquo; 123-SMS)
+
+# --- setup
+Sms123SetupTitle=123-SMS.net SMS module
+Sms123SetupIntro=Login and API key: sent by e-mail when you register on 123-sms.net (customer area &rsaquo; API).
+Sms123Section1=1. 123-SMS.net account
+Sms123Login=Login
+Sms123ApiKey=API key
+Sms123Sender=Sender ID (optional)
+Sms123SenderHint=custom sender name, to be declared with 123-SMS
+Sms123AdminNumber=Internal number (alerts)
+Sms123AdminNumberHint=your own mobile, for triggers addressed &laquo;&nbsp;internally&nbsp;&raquo;
+Sms123SettingsSaved=Settings saved.
+Sms123TestButton=Test the connection
+Sms123TestHint=Dry run: no SMS is sent, no credit is used.
+Sms123DiagTitle=Diagnostic result
+Sms123DiagCheck=Check
+Sms123DiagState=State
+Sms123DiagDetail=Detail
+Sms123DiagOk=OK
+Sms123DiagKo=TO FIX
+Sms123DiagInfo=info
+Sms123Section2=2. Automatic sending (no code required)
+Sms123TrigActive=Active
+Sms123TrigEvent=Dolibarr event
+Sms123TrigDest=Recipient
+Sms123TrigDestClient=The customer
+Sms123TrigDestAdmin=Internal
+Sms123TrigSaved=Triggers saved.
+Sms123TrigSaveButton=Save the triggers
+Sms123Variables=Variables available in messages: <code>{ref}</code> document number, <code>{societe}</code> customer name, <code>{total}</code> amount incl. tax, <code>{date}</code> today's date, <code>{masociete}</code> your company name.
+Sms123VariablesDest=Recipient &laquo;&nbsp;The customer&nbsp;&raquo;: mobile number of the third party (or its phone number). &laquo;&nbsp;Internal&nbsp;&raquo;: the internal number set above.
+Sms123EvORDER_VALIDATE=Order validated
+Sms123EvBILL_VALIDATE=Invoice validated
+Sms123EvBILL_PAYED=Invoice paid
+Sms123EvSHIPPING_VALIDATE=Shipment validated
+Sms123EvPROPAL_VALIDATE=Quote validated
+Sms123Section3=3. Appointment reminders (hourly scheduled job)
+Sms123RdvActive=Enable reminders
+Sms123RdvTypes=Event types concerned
+Sms123RdvTypesHint=Ctrl+click to select several (e.g. Meeting).
+Sms123RdvNoType=No event type found (is the Agenda module enabled?)
+Sms123RdvDelay=Lead time before the appointment
+Sms123Hours=hours
+Sms123RdvDelayHint=(24 = the day before, at the same time)
+Sms123RdvVariables=Variables: <code>{date}</code> <code>{heure}</code> <code>{label}</code> <code>{societe}</code> <code>{masociete}</code>
+Sms123Section4=4. Overdue invoice reminders (daily scheduled job)
+Sms123RelanceActive=Enable reminders
+Sms123RelanceFrom=Remind from
+Sms123RelanceFromHint=days after the due date
+Sms123RelanceRepeat=Do not remind more than once every
+Sms123Days=days
+Sms123RelanceVariables=Variables: <code>{ref}</code> <code>{total}</code> <code>{date}</code> <code>{societe}</code> <code>{masociete}</code>
+Sms123CronSaved=Reminders saved.
+Sms123CronSaveButton=Save the reminders
+Sms123CronWarning=<b>Important</b>: these features rely on the Dolibarr scheduled jobs. Once enabled here, go to <b>Home &rsaquo; Setup &rsaquo; Scheduled jobs</b> and enable the &laquo;&nbsp;123-SMS&nbsp;&raquo; lines (the Dolibarr cron itself must be running on the server).
+Sms123Section5=5. Advanced options
+Sms123ArActive=Request delivery receipts
+Sms123ArHint=The delivery status of each SMS is then shown in the history. This option requires the return URL below to be declared with 123-SMS (support &rsaquo; HTTP delivery receipts).
+Sms123ArUrl=Return URL to declare
+Sms123ArKey=Security key (optional)
+Sms123ArKeyHint=if set, the URL to declare is the one shown above; calls without this key are rejected.
+Sms123AgendaActive=Log SMS in the customer's agenda
+Sms123AgendaHint=every SMS linked to a third party creates an event on its record.
+Sms123AlerteActive=Low balance alert
+Sms123AlerteSeuil=Alert below
+Sms123AlerteMail=Alert e-mail
+Sms123AlerteSms=Also send an SMS to the internal number
+Sms123AlerteRepeat=Do not alert more than once every
+Sms123AdvancedSaved=Advanced options saved.
+Sms123AdvancedSaveButton=Save the advanced options
+Sms123FiveWays=<b>Five ways to send SMS from Dolibarr</b>: 1) manually, menu <b>Tools &rsaquo; SMS 123-SMS</b> (with history and balance); 2) <b>automatically</b> through the triggers above; 3) from the <b>&laquo;&nbsp;Send an SMS&nbsp;&raquo; button</b> on customer, quote, order, invoice and shipment records; 4) <b>in bulk</b> from the third party and contact lists (mass action); 5) <b>your own way</b> in your scripts: <code>Sms123Api::envoyer($numero, $message)</code>.
+
+# --- diagnostic
+Sms123DiagLogin=Login set
+Sms123DiagKey=API key set
+Sms123DiagToFill=to be filled in above
+Sms123DiagSender=Sender ID
+Sms123DiagSenderNone=(none: default short number)
+Sms123DiagCurl=PHP cURL extension
+Sms123DiagCurlOk=available
+Sms123DiagCurlKo=missing: please install php-curl
+Sms123DiagProxy=Dolibarr proxy
+Sms123DiagProxyOn=enabled (%s)
+Sms123DiagProxyOff=none (direct connection)
+Sms123DiagNoCred=test impossible: fill in your credentials first
+Sms123DiagApiCall=API call
+Sms123DiagReach=Reaching www.123-sms.net
+Sms123DiagReachOk=HTTP 200 in %s ms (%s)
+Sms123DiagReachKo=check that the server can reach the Internet over HTTPS (firewall, proxy)
+Sms123DiagLocalIp=Your server also hosts 123-sms.net: the domain resolves to a local IP. Please update the module (1.3.0+).
+Sms123DiagCredOk=Credentials accepted
+Sms123DiagApiAnswer=API answer: %s - %s
+Sms123DiagBalance=Account balance
+Sms123DiagBalanceLeft=%s SMS left
+Sms123DiagVerdict=Verdict
+Sms123DiagVerdictOk=Connection is up: your SMS can be sent.
+Sms123DiagVerdictKo=Fix the login and API key (123-sms.net customer area &rsaquo; API).
+
+# --- bulk sending
+Sms123MassTitle=Bulk SMS sending
+Sms123MassAction=Send an SMS (123-SMS)
+Sms123MassIntro=Select the recipients, write your message, send. Numbers are read from the records; recipients without a number are skipped.
+Sms123MassSelection=Recipients
+Sms123MassNoSelection=No selection: go back to the third party or contact list, tick some lines then choose the &laquo;&nbsp;Send an SMS&nbsp;&raquo; mass action. You may also type free numbers below.
+Sms123MassFreeNumbers=Free numbers
+Sms123MassFreeHint=one number per line (or separated by commas)
+Sms123MassNoNumber=no number
+Sms123MassName=Name
+Sms123MassNumber=Number
+Sms123MassCount=%s reachable recipient(s) out of %s selected
+Sms123MassVariables=Variables: <code>{societe}</code> <code>{contact}</code> <code>{masociete}</code>. If you use one, every SMS is personalised (individual sending, therefore slower).
+Sms123MassTest=Dry run (nothing is sent nor charged)
+Sms123MassSend=Send to the selection
+Sms123MassResult=Sending result
+Sms123MassDone=%s SMS sent, %s failed.
+Sms123MassNoRecipient=No reachable recipient.
+Sms123MassNoMessage=Please write the message to send.
+Sms123MassLimit=Limit reached: %s recipients maximum per sending.
+Sms123MassLowBalance=Warning: your balance (%s SMS) is lower than the number of recipients (%s).
+Sms123MassBack=Back to single sending
+
+# --- dashboard widget
+Sms123BoxNone=No SMS sent.
+Sms123BoxSendOne=Send an SMS
+
+# --- scheduled jobs and e-mails (plain text)
+Sms123CronRdvOff=Appointment reminders are disabled in the module setup.
+Sms123CronRdvNoType=No event type selected: nothing to do.
+Sms123CronRdvDone=Appointment reminders: %s SMS sent, %s skipped (already reminded or no number).
+Sms123CronRelanceOff=Invoice reminders are disabled in the module setup.
+Sms123CronRelanceDone=Invoice reminders: %s SMS sent, %s skipped (already reminded or no number).
+Sms123CronSoldeOff=Low balance alert is disabled in the module setup.
+Sms123CronSoldeUnavailable=Balance unavailable: please check the API credentials.
+Sms123CronSoldeOk=Balance is high enough (%s SMS, threshold %s): no alert.
+Sms123CronSoldeRecent=Alert already sent recently: nothing to do.
+Sms123CronSoldeSent=Low balance alert sent (%s SMS left).
+Sms123AlerteMailSubject=123-SMS: low balance (%s SMS left)
+Sms123AlerteMailBody=The SMS credit balance of your 123-SMS.net account has dropped to %s SMS (alert threshold: %s). Please top up your account on https://www.123-sms.net/ so that your automatic sendings keep running. Message sent by the 123-SMS module for Dolibarr.
+Sms123AlerteSmsBody=123-SMS: you have %s SMS left. Please top up your account.
+Sms123SqlError=SQL error: %s
+Sms123AgendaLabel=SMS sent to %s

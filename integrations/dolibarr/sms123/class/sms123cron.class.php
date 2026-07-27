@@ -2,7 +2,8 @@
 /* Taches planifiees du module 123-SMS - licence MIT
  * - rappelsRendezVous() : SMS de rappel avant les evenements d'agenda
  * - relancesFactures()  : SMS de relance sur les factures impayees
- * Les deux sont declarees dans Accueil > Configuration > Taches planifiees.
+ * - alerteSolde()       : alerte e-mail/SMS quand le credit devient bas
+ * Les trois sont declarees dans Accueil > Configuration > Taches planifiees.
  */
 
 class Sms123Cron
@@ -19,34 +20,28 @@ class Sms123Cron
 	 */
 	public function rappelsRendezVous()
 	{
-		global $db, $conf, $langs;
+		global $db;
 
 		$this->output = '';
 		$this->error = '';
+		dol_include_once('/sms123/class/sms123api.class.php');
 
 		if (!getDolGlobalString('SMS123_RDV_ACTIF')) {
-			$this->output = 'Rappels de rendez-vous desactives dans la configuration du module.';
+			$this->output = Sms123Api::t('Sms123CronRdvOff');
 			return 0;
 		}
 
-		$types = getDolGlobalString('SMS123_RDV_TYPES');
-		if (empty($types)) {
-			$this->output = 'Aucun type d evenement selectionne : rien a faire.';
-			return 0;
-		}
 		$listeTypes = array();
-		foreach (explode(',', $types) as $t) {
+		foreach (explode(',', getDolGlobalString('SMS123_RDV_TYPES')) as $t) {
 			$t = (int) trim($t);
 			if ($t > 0) {
 				$listeTypes[] = $t;
 			}
 		}
 		if (!count($listeTypes)) {
-			$this->output = 'Aucun type d evenement valide : rien a faire.';
+			$this->output = Sms123Api::t('Sms123CronRdvNoType');
 			return 0;
 		}
-
-		dol_include_once('/sms123/class/sms123api.class.php');
 
 		$heures = (int) getDolGlobalString('SMS123_RDV_HEURES');
 		if ($heures <= 0) {
@@ -71,12 +66,13 @@ class Sms123Cron
 
 		$resql = $db->query($sql);
 		if (!$resql) {
-			$this->error = 'Erreur SQL : '.$db->lasterror();
+			$this->error = Sms123Api::t('Sms123SqlError', $db->lasterror());
 			return -1;
 		}
 
 		$envoyes = 0;
 		$ignores = 0;
+		$detail = '';
 		while ($obj = $db->fetch_object($resql)) {
 			$origine = 'rappel-rdv#'.$obj->id;
 			if (self::dejaEnvoye($db, $origine, 0)) {
@@ -91,17 +87,16 @@ class Sms123Cron
 			}
 
 			$message = strtr($modele, self::variablesEvenement($db, $obj));
-			$code = Sms123Api::envoyer($numero, $message, 0, $origine);
+			$code = Sms123Api::envoyer($numero, $message, 0, $origine, (int) $obj->fk_soc);
 			if (in_array($code, array('80', '81'), true)) {
 				$envoyes++;
 			} else {
-				$this->output .= 'Evenement '.$obj->id.' : code '.$code.'. ';
+				$detail .= 'Evenement '.$obj->id.' : code '.$code.'. ';
 			}
 		}
 		$db->free($resql);
 
-		$this->output = 'Rappels de rendez-vous : '.$envoyes.' SMS envoye(s), '.$ignores
-			.' ignore(s) (deja rappele ou sans numero). '.$this->output;
+		$this->output = Sms123Api::t('Sms123CronRdvDone', $envoyes, $ignores).' '.$detail;
 
 		return 0;
 	}
@@ -115,17 +110,16 @@ class Sms123Cron
 	 */
 	public function relancesFactures()
 	{
-		global $db, $conf;
+		global $db;
 
 		$this->output = '';
 		$this->error = '';
+		dol_include_once('/sms123/class/sms123api.class.php');
 
 		if (!getDolGlobalString('SMS123_RELANCE_ACTIF')) {
-			$this->output = 'Relances de factures desactivees dans la configuration du module.';
+			$this->output = Sms123Api::t('Sms123CronRelanceOff');
 			return 0;
 		}
-
-		dol_include_once('/sms123/class/sms123api.class.php');
 
 		$jours = (int) getDolGlobalString('SMS123_RELANCE_JOURS');
 		if ($jours < 0) {
@@ -146,18 +140,19 @@ class Sms123Cron
 		$sql .= ' FROM '.MAIN_DB_PREFIX.'facture as f';
 		$sql .= ' WHERE f.entity IN ('.getEntity('facture').')';
 		$sql .= ' AND f.fk_statut = 1 AND f.paye = 0';
-		$sql .= " AND f.date_lim_reglement IS NOT NULL";
+		$sql .= ' AND f.date_lim_reglement IS NOT NULL';
 		$sql .= " AND f.date_lim_reglement <= '".$db->idate($limite)."'";
 		$sql .= ' ORDER BY f.date_lim_reglement';
 
 		$resql = $db->query($sql);
 		if (!$resql) {
-			$this->error = 'Erreur SQL : '.$db->lasterror();
+			$this->error = Sms123Api::t('Sms123SqlError', $db->lasterror());
 			return -1;
 		}
 
 		$envoyes = 0;
 		$ignores = 0;
+		$detail = '';
 		while ($obj = $db->fetch_object($resql)) {
 			$origine = 'relance-facture#'.$obj->rowid;
 			if (self::dejaEnvoye($db, $origine, $repeter)) {
@@ -179,17 +174,96 @@ class Sms123Cron
 				'{masociete}' => self::maSociete(),
 			));
 
-			$code = Sms123Api::envoyer($numero, $message, 0, $origine);
+			$code = Sms123Api::envoyer($numero, $message, 0, $origine, (int) $obj->fk_soc);
 			if (in_array($code, array('80', '81'), true)) {
 				$envoyes++;
 			} else {
-				$this->output .= 'Facture '.$obj->ref.' : code '.$code.'. ';
+				$detail .= 'Facture '.$obj->ref.' : code '.$code.'. ';
 			}
 		}
 		$db->free($resql);
 
-		$this->output = 'Relances de factures : '.$envoyes.' SMS envoye(s), '.$ignores
-			.' ignore(s) (deja relance ou sans numero). '.$this->output;
+		$this->output = Sms123Api::t('Sms123CronRelanceDone', $envoyes, $ignores).' '.$detail;
+
+		return 0;
+	}
+
+	/**
+	 * Alerte de solde bas : previent par e-mail (et par SMS si demande)
+	 * lorsque le credit du compte passe sous le seuil configure.
+	 * A planifier une fois par jour.
+	 *
+	 * @return int 0 si OK
+	 */
+	public function alerteSolde()
+	{
+		global $db, $conf;
+
+		$this->output = '';
+		$this->error = '';
+		dol_include_once('/sms123/class/sms123api.class.php');
+
+		if (!getDolGlobalString('SMS123_ALERTE_ACTIF')) {
+			$this->output = Sms123Api::t('Sms123CronSoldeOff');
+			return 0;
+		}
+
+		$seuil = (int) getDolGlobalString('SMS123_ALERTE_SEUIL');
+		if ($seuil <= 0) {
+			$seuil = 50;
+		}
+		$repeter = (int) getDolGlobalString('SMS123_ALERTE_REPETER');
+		if ($repeter <= 0) {
+			$repeter = 3;
+		}
+
+		$solde = Sms123Api::solde();
+		if ($solde === null) {
+			$this->output = Sms123Api::t('Sms123CronSoldeUnavailable');
+			return 0;
+		}
+		if ($solde >= $seuil) {
+			$this->output = Sms123Api::t('Sms123CronSoldeOk', $solde, $seuil);
+			return 0;
+		}
+
+		$derniere = (int) getDolGlobalString('SMS123_ALERTE_DERNIERE');
+		if ($derniere > 0 && (dol_now() - $derniere) < ($repeter * 86400)) {
+			$this->output = Sms123Api::t('Sms123CronSoldeRecent');
+			return 0;
+		}
+
+		$destinataire = getDolGlobalString('SMS123_ALERTE_MAIL');
+		if (empty($destinataire)) {
+			$destinataire = getDolGlobalString('MAIN_INFO_SOCIETE_MAIL');
+		}
+		$expediteur = getDolGlobalString('MAIN_MAIL_EMAIL_FROM');
+		if (empty($expediteur)) {
+			$expediteur = $destinataire;
+		}
+
+		if (!empty($destinataire) && !empty($expediteur)) {
+			require_once DOL_DOCUMENT_ROOT.'/core/class/CMailFile.class.php';
+			$courriel = new CMailFile(
+				Sms123Api::t('Sms123AlerteMailSubject', $solde),
+				$destinataire,
+				$expediteur,
+				Sms123Api::t('Sms123AlerteMailBody', $solde, $seuil)
+			);
+			if (!$courriel->sendfile()) {
+				dol_syslog('Sms123Cron::alerteSolde envoi e-mail impossible : '.$courriel->error, LOG_WARNING);
+			}
+		}
+
+		if (getDolGlobalString('SMS123_ALERTE_SMS')) {
+			$numero = getDolGlobalString('SMS123_NUM_ADMIN');
+			if (!empty($numero)) {
+				Sms123Api::envoyer($numero, Sms123Api::t('Sms123AlerteSmsBody', $solde), 0, 'alerte-solde');
+			}
+		}
+
+		dolibarr_set_const($db, 'SMS123_ALERTE_DERNIERE', dol_now(), 'chaine', 0, '', $conf->entity);
+		$this->output = Sms123Api::t('Sms123CronSoldeSent', $solde);
 
 		return 0;
 	}

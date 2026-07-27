@@ -11,6 +11,29 @@ class Sms123Api
 	const URL = 'https://www.123-sms.net/http.php';
 	const URL_SOLDE = 'https://www.123-sms.net/solde_comptes.php';
 
+	/** Charge les traductions du module (appelable plusieurs fois sans surcout). */
+	public static function langs()
+	{
+		global $langs;
+
+		if (is_object($langs)) {
+			$langs->load('sms123@sms123');
+		}
+
+		return $langs;
+	}
+
+	/** Traduction courte, tolerante a un contexte sans $langs (scripts CLI). */
+	public static function t($cle, $a = '', $b = '')
+	{
+		$langs = self::langs();
+		if (is_object($langs)) {
+			return $langs->trans($cle, $a, $b);
+		}
+
+		return $cle;
+	}
+
 	/**
 	 * Envoie un SMS. Renvoie le code retour API (80 = envoye) ou 'ERR:...'
 	 *
@@ -19,16 +42,17 @@ class Sms123Api
 	 * @param string $message texte du SMS (160 caracteres GSM par SMS)
 	 * @param int    $test    1 = envoi a blanc (rien n'est envoye ni debite)
 	 * @param string $origine trace dans l'historique (manuel, trigger, api...)
+	 * @param int    $socid   tiers concerne, pour la trace dans l'agenda
 	 * @return string
 	 */
-	public static function envoyer($numero, $message, $test = 0, $origine = 'api')
+	public static function envoyer($numero, $message, $test = 0, $origine = 'api', $socid = 0)
 	{
 		global $db, $user;
 
 		$identifiant = getDolGlobalString('SMS123_IDENTIFIANT');
 		$cleapi = getDolGlobalString('SMS123_CLEAPI');
 		if (empty($identifiant) || empty($cleapi)) {
-			return 'ERR: module non configure (menu Configuration > Modules > 123-SMS)';
+			return 'ERR: '.self::t('Sms123NotConfigured');
 		}
 
 		$champs = array(
@@ -41,6 +65,10 @@ class Sms123Api
 		if (!empty($sender)) {
 			$champs['sender'] = $sender;
 		}
+		// Accuses de reception : l'API rappelle ensuite sms123ar.php avec le statut
+		if (getDolGlobalString('SMS123_AR_ACTIF') && empty($test)) {
+			$champs['refaccuse'] = 'o';
+		}
 		if (!empty($test)) {
 			$champs['test'] = 'o';
 		}
@@ -50,14 +78,38 @@ class Sms123Api
 			dol_syslog('Sms123Api::envoyer echec HTTP '.$reponse['http_code'].' '.$reponse['erreur'], LOG_WARNING);
 			return 'ERR: appel API impossible (HTTP '.$reponse['http_code'].($reponse['erreur'] ? ' - '.$reponse['erreur'] : '').')';
 		}
-		dol_syslog('Sms123Api::envoyer -> code '.$reponse['contenu'].' ('.$reponse['methode'].')', LOG_INFO);
+
+		// Avec refaccuse, l'API peut renvoyer le code suivi d'une reference d'envoi
+		list($code, $reference) = self::separerCodeReference($reponse['contenu']);
+		dol_syslog('Sms123Api::envoyer -> code '.$code.' ('.$reponse['methode'].')', LOG_INFO);
 
 		if (empty($test) && is_object($db)) {
-			self::historiser($db, $champs['numero'], $message, $reponse['contenu'],
-				$reponse['methode'], $origine, is_object($user) ? $user->id : 0);
+			self::historiser($db, $champs['numero'], $message, $code,
+				$reponse['methode'], $origine, is_object($user) ? $user->id : 0,
+				$reference, $socid);
+
+			if ($socid > 0 && in_array($code, array('80', '81'), true)) {
+				self::tracerAgenda($db, $socid, $champs['numero'], $message);
+			}
 		}
 
-		return $reponse['contenu'];
+		return $code;
+	}
+
+	/**
+	 * Separe le code retour (2 chiffres) de la reference d'envoi eventuelle.
+	 *
+	 * @param string $contenu corps de la reponse HTTP
+	 * @return array          array(code, reference)
+	 */
+	public static function separerCodeReference($contenu)
+	{
+		$brut = trim((string) $contenu);
+		if (preg_match('/^([0-9]{2})[^0-9A-Za-z]*(.*)$/s', $brut, $m)) {
+			return array($m[1], trim($m[2]));
+		}
+
+		return array($brut, '');
 	}
 
 	/**
@@ -175,21 +227,93 @@ class Sms123Api
 		return (float) str_replace(',', '.', $val);
 	}
 
+	/**
+	 * Solde mis en cache : evite un appel HTTP a chaque affichage du widget
+	 * d'accueil. Le cache est stocke dans les constantes du module.
+	 *
+	 * @param int $age duree de validite du cache, en secondes
+	 * @return float|null
+	 */
+	public static function soldeCache($age = 900)
+	{
+		global $db, $conf;
+
+		$valeur = getDolGlobalString('SMS123_SOLDE_CACHE');
+		$date = (int) getDolGlobalString('SMS123_SOLDE_CACHE_TS');
+		if ($valeur !== '' && $date > 0 && (dol_now() - $date) < $age) {
+			return (float) $valeur;
+		}
+
+		$solde = self::solde();
+		if ($solde !== null && is_object($db)) {
+			$entity = is_object($conf) ? $conf->entity : 1;
+			dolibarr_set_const($db, 'SMS123_SOLDE_CACHE', $solde, 'chaine', 0, '', $entity);
+			dolibarr_set_const($db, 'SMS123_SOLDE_CACHE_TS', dol_now(), 'chaine', 0, '', $entity);
+		}
+
+		return $solde;
+	}
+
 	/** Enregistre un envoi dans l'historique (table llx_sms123_envoi). */
-	public static function historiser($db, $numero, $message, $code, $methode, $origine = 'manuel', $fk_user = 0)
+	public static function historiser($db, $numero, $message, $code, $methode, $origine = 'manuel', $fk_user = 0, $reference = '', $socid = 0)
 	{
 		global $conf;
 
-		$sql = 'INSERT INTO '.MAIN_DB_PREFIX."sms123_envoi(entity, datec, fk_user, numero, message, code, methode, origine)"
-			." VALUES (".((int) $conf->entity).", '".$db->idate(dol_now())."', "
-			.($fk_user > 0 ? (int) $fk_user : 'NULL').", '".$db->escape($numero)."', '"
+		$sql = 'INSERT INTO '.MAIN_DB_PREFIX.'sms123_envoi(entity, datec, fk_user, fk_soc, numero, message, code, methode, origine, reference)'
+			.' VALUES ('.((int) $conf->entity).", '".$db->idate(dol_now())."', "
+			.($fk_user > 0 ? (int) $fk_user : 'NULL').', '
+			.($socid > 0 ? (int) $socid : 'NULL').", '".$db->escape($numero)."', '"
 			.$db->escape(dol_trunc($message, 500))."', '".$db->escape($code)."', '"
-			.$db->escape($methode)."', '".$db->escape($origine)."')";
+			.$db->escape($methode)."', '".$db->escape($origine)."', '"
+			.$db->escape($reference)."')";
 
 		$resql = $db->query($sql);
 		if (!$resql) {
 			dol_syslog('Sms123Api::historiser '.$db->lasterror(), LOG_WARNING);
 			return -1;
+		}
+
+		return 1;
+	}
+
+	/**
+	 * Trace le SMS dans l'agenda du tiers (option SMS123_AGENDA).
+	 * Echoue en silence : un souci d'agenda ne doit jamais bloquer un envoi.
+	 *
+	 * @param DoliDB $db      base
+	 * @param int    $socid   tiers concerne
+	 * @param string $numero  destinataire
+	 * @param string $message texte envoye
+	 * @return int 1 si l'evenement a ete cree, 0 sinon
+	 */
+	public static function tracerAgenda($db, $socid, $numero, $message)
+	{
+		global $user;
+
+		if (!getDolGlobalString('SMS123_AGENDA') || $socid <= 0) {
+			return 0;
+		}
+		if (!file_exists(DOL_DOCUMENT_ROOT.'/comm/action/class/actioncomm.class.php')) {
+			return 0;
+		}
+		require_once DOL_DOCUMENT_ROOT.'/comm/action/class/actioncomm.class.php';
+
+		$evenement = new ActionComm($db);
+		$evenement->type_code = 'AC_OTH_AUTO';
+		$evenement->code = 'AC_OTH_AUTO';
+		$evenement->label = dol_trunc(self::t('Sms123AgendaLabel', $numero), 128);
+		$evenement->note_private = $message;
+		$evenement->datep = dol_now();
+		$evenement->datef = dol_now();
+		$evenement->percentage = -1;
+		$evenement->socid = (int) $socid;
+		$evenement->userownerid = is_object($user) ? $user->id : 0;
+		$evenement->userdoneid = is_object($user) ? $user->id : 0;
+
+		$res = $evenement->create(is_object($user) ? $user : null);
+		if ($res <= 0) {
+			dol_syslog('Sms123Api::tracerAgenda '.$evenement->error, LOG_WARNING);
+			return 0;
 		}
 
 		return 1;
@@ -220,16 +344,48 @@ class Sms123Api
 	/** Libelle d'un code retour API. */
 	public static function libelle($code)
 	{
-		$libelles = array(
-			'80' => 'Le message a ete envoye.',
-			'81' => 'Enregistre pour un envoi en differe.',
-			'82' => 'Identifiant et/ou cle API invalides.',
-			'83' => 'Credit insuffisant : rechargez votre compte.',
-			'84' => 'Numero de mobile invalide.',
-			'91' => 'Doublon : meme message deja envoye a ce numero sous 24 h.',
-			'97' => 'Sender-ID invalide ou non declare.',
-		);
-		return isset($libelles[$code]) ? $libelles[$code] : 'Code retour : '.$code;
+		$connus = array('80', '81', '82', '83', '84', '91', '97');
+		if (in_array((string) $code, $connus, true)) {
+			return self::t('Sms123Code'.$code);
+		}
+
+		return self::t('Sms123CodeOther', $code);
+	}
+
+	/** Libelle d'un statut de remise (accuse de reception). */
+	public static function libelleStatut($statut)
+	{
+		if ($statut === 'remis') {
+			return self::t('Sms123Delivered');
+		}
+		if ($statut === 'non-remis') {
+			return self::t('Sms123NotDelivered');
+		}
+		if ($statut === 'attente') {
+			return self::t('Sms123Pending');
+		}
+
+		return self::t('Sms123NoReceipt');
+	}
+
+	/**
+	 * URL publique de retour des accuses de reception, a declarer aupres
+	 * de 123-SMS (documentation « Retour des AR par http »).
+	 *
+	 * @return string
+	 */
+	public static function urlAccuse()
+	{
+		global $dolibarr_main_url_root;
+
+		$racine = empty($dolibarr_main_url_root) ? DOL_MAIN_URL_ROOT : $dolibarr_main_url_root;
+		$url = rtrim($racine, '/').'/custom/sms123/sms123ar.php';
+		$cle = getDolGlobalString('SMS123_AR_CLE');
+		if (!empty($cle)) {
+			$url .= '?cle='.urlencode($cle);
+		}
+
+		return $url;
 	}
 
 	/**
@@ -244,23 +400,24 @@ class Sms123Api
 
 		$identifiant = getDolGlobalString('SMS123_IDENTIFIANT');
 		$cleapi = getDolGlobalString('SMS123_CLEAPI');
-		$tests[] = array('Identifiant renseigne', $identifiant ? 'ok' : 'ko',
-			$identifiant ? $identifiant : 'a saisir ci-dessus');
-		$tests[] = array('Cle API renseignee', $cleapi ? 'ok' : 'ko',
-			$cleapi ? str_pad('', dol_strlen($cleapi), '*') : 'a saisir ci-dessus');
+		$tests[] = array(self::t('Sms123DiagLogin'), $identifiant ? 'ok' : 'ko',
+			$identifiant ? $identifiant : self::t('Sms123DiagToFill'));
+		$tests[] = array(self::t('Sms123DiagKey'), $cleapi ? 'ok' : 'ko',
+			$cleapi ? str_pad('', dol_strlen($cleapi), '*') : self::t('Sms123DiagToFill'));
 
 		$sender = getDolGlobalString('SMS123_SENDER');
-		$tests[] = array('Sender-ID', 'info', $sender ? $sender : '(aucun : numero court par defaut)');
+		$tests[] = array(self::t('Sms123DiagSender'), 'info',
+			$sender ? $sender : self::t('Sms123DiagSenderNone'));
 
-		$tests[] = array('Extension cURL de PHP', function_exists('curl_init') ? 'ok' : 'ko',
-			function_exists('curl_init') ? 'disponible' : 'absente : installez php-curl');
+		$tests[] = array(self::t('Sms123DiagCurl'), function_exists('curl_init') ? 'ok' : 'ko',
+			function_exists('curl_init') ? self::t('Sms123DiagCurlOk') : self::t('Sms123DiagCurlKo'));
 
 		$proxy = getDolGlobalString('MAIN_PROXY_USE');
-		$tests[] = array('Proxy Dolibarr', 'info',
-			$proxy ? 'actif ('.getDolGlobalString('MAIN_PROXY_HOST').')' : 'aucun (connexion directe)');
+		$tests[] = array(self::t('Sms123DiagProxy'), 'info',
+			$proxy ? self::t('Sms123DiagProxyOn', getDolGlobalString('MAIN_PROXY_HOST')) : self::t('Sms123DiagProxyOff'));
 
 		if (empty($identifiant) || empty($cleapi)) {
-			$tests[] = array('Appel de l\'API', 'ko', 'test impossible : renseignez d\'abord vos identifiants');
+			$tests[] = array(self::t('Sms123DiagApiCall'), 'ko', self::t('Sms123DiagNoCred'));
 			return $tests;
 		}
 
@@ -273,31 +430,29 @@ class Sms123Api
 			'test' => 'o',
 		));
 
-		$tests[] = array('Jointure de www.123-sms.net',
+		$tests[] = array(self::t('Sms123DiagReach'),
 			$reponse['http_code'] == 200 ? 'ok' : 'ko',
 			$reponse['http_code'] == 200
-				? 'HTTP 200 en '.$reponse['duree'].' ms ('.$reponse['methode'].')'
+				? self::t('Sms123DiagReachOk', $reponse['duree'], $reponse['methode'])
 				: 'HTTP '.$reponse['http_code'].($reponse['erreur'] ? ' - '.$reponse['erreur'] : '')
-					.(strpos($reponse['erreur'], 'local IP') !== false
-						? ' | Votre serveur heberge aussi 123-sms.net : le domaine se resout en IP locale.'
-							.' Mettez le module a jour (1.3.0+).'
-						: ' : verifiez que le serveur peut sortir en HTTPS (pare-feu, proxy)'));
+					.' | '.(strpos($reponse['erreur'], 'local IP') !== false
+						? self::t('Sms123DiagLocalIp')
+						: self::t('Sms123DiagReachKo')));
 
 		if ($reponse['http_code'] == 200) {
-			$code = $reponse['contenu'];
+			list($code, ) = self::separerCodeReference($reponse['contenu']);
 			$identifiants_ok = !in_array($code, array('82', '88', '87'), true);
-			$tests[] = array('Identifiants acceptes', $identifiants_ok ? 'ok' : 'ko',
-				'reponse API : '.$code.' - '.self::libelle($code));
+			$tests[] = array(self::t('Sms123DiagCredOk'), $identifiants_ok ? 'ok' : 'ko',
+				self::t('Sms123DiagApiAnswer', $code, self::libelle($code)));
 
 			$solde = self::solde();
-			$tests[] = array('Solde du compte', $solde === null ? 'info' : ($solde > 0 ? 'ok' : 'ko'),
-				$solde === null ? 'indisponible' : $solde.' SMS restants');
+			$tests[] = array(self::t('Sms123DiagBalance'), $solde === null ? 'info' : ($solde > 0 ? 'ok' : 'ko'),
+				$solde === null ? self::t('Sms123BalanceUnavailable') : self::t('Sms123DiagBalanceLeft', $solde));
 
 			if ($identifiants_ok) {
-				$tests[] = array('Verdict', 'ok', 'Connexion operationnelle : vos SMS peuvent partir.');
+				$tests[] = array(self::t('Sms123DiagVerdict'), 'ok', self::t('Sms123DiagVerdictOk'));
 			} else {
-				$tests[] = array('Verdict', 'ko',
-					'Corrigez l\'identifiant et la cle API (espace client 123-sms.net > API).');
+				$tests[] = array(self::t('Sms123DiagVerdict'), 'ko', self::t('Sms123DiagVerdictKo'));
 			}
 		}
 
@@ -305,7 +460,7 @@ class Sms123Api
 	}
 
 	/**
-	 * Remplace les variables {ref} {societe} {total} {date} {contact} d'un modele.
+	 * Remplace les variables {ref} {societe} {total} {date} d'un modele.
 	 *
 	 * @param string $modele modele de message
 	 * @param object $objet  objet Dolibarr (commande, facture, expedition...)
@@ -313,7 +468,7 @@ class Sms123Api
 	 */
 	public static function appliquerModele($modele, $objet)
 	{
-		global $langs, $mysoc;
+		global $mysoc;
 
 		$soc = null;
 		if (method_exists($objet, 'fetch_thirdparty')) {

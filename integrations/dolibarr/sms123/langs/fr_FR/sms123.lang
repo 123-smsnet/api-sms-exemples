@@ -1,4 +1,199 @@
-# Traductions fr_FR du module 123-SMS
+# Traductions fr_FR du module 123-SMS - licence MIT
+# Les accents sont ecrits en entites HTML : le fichier reste ASCII et
+# s'affiche correctement quel que soit l'encodage du serveur.
 Module500123Name=SMS 123-SMS.net
 Module500123Desc=Envoi de SMS professionnels via 123-SMS.net
-SMS 123-SMS=SMS 123-SMS
+Sms123Menu=SMS 123-SMS
+Sms123MenuMass=Envoi en masse
+Sms123BoxTitle=SMS 123-SMS.net
+Permission50012301=Envoyer des SMS via 123-SMS
+
+# --- commun
+Sms123Balance=Solde 123-SMS.net
+Sms123BalanceUnavailable=indisponible
+Sms123SmsUnit=SMS
+Sms123TopUpAdvice=pensez &agrave; recharger
+Sms123TopUp=recharger
+Sms123CustomerArea=espace client
+Sms123ConfigLink=Configuration du module 123-SMS
+Sms123Date=Date
+Sms123Recipient=Destinataire
+Sms123Message=Message
+Sms123Result=R&eacute;sultat
+Sms123Origin=Origine
+Sms123Status=Remise
+Sms123Save=Enregistrer
+
+# --- page d'envoi
+Sms123SendTitle=Envoyer un SMS via 123-SMS.net
+Sms123NewMessage=Nouveau message
+Sms123Recipients=Destinataire(s)
+Sms123RecipientsHint=0601020304 (plusieurs : s&eacute;par&eacute;s par -)
+Sms123CounterHint=160 caract&egrave;res GSM par SMS (message long : facturation par segment).
+Sms123SendButton=Envoyer le SMS
+Sms123NeedRecipientAndMessage=Indiquez un destinataire et un message.
+Sms123History=Historique des envois
+Sms123NoHistory=Aucun envoi enregistr&eacute; pour le moment.
+Sms123DevTip=Astuce d&eacute;veloppeur : la classe <b>Sms123Api</b> est r&eacute;utilisable partout.
+Sms123DevTipTriggers=Pour des envois automatiques sans code, activez les <b>d&eacute;clencheurs</b> dans la configuration du module.
+Sms123MassLink=Envoi en masse
+Sms123Chars=caract&egrave;res
+Sms123UnicodeWarning=(caract&egrave;res sp&eacute;ciaux : 70 caract&egrave;res par SMS)
+
+# --- statuts de remise (accuses de reception)
+Sms123Delivered=Remis
+Sms123NotDelivered=Non remis
+Sms123Pending=En attente
+Sms123NoReceipt=-
+
+# --- codes retour de l'API
+Sms123Code80=Le message a &eacute;t&eacute; envoy&eacute;.
+Sms123Code81=Enregistr&eacute; pour un envoi en diff&eacute;r&eacute;.
+Sms123Code82=Identifiant et/ou cl&eacute; API invalides.
+Sms123Code83=Cr&eacute;dit insuffisant : rechargez votre compte.
+Sms123Code84=Num&eacute;ro de mobile invalide.
+Sms123Code91=Doublon : m&ecirc;me message d&eacute;j&agrave; envoy&eacute; &agrave; ce num&eacute;ro sous 24 h.
+Sms123Code97=Sender-ID invalide ou non d&eacute;clar&eacute;.
+Sms123CodeOther=Code retour : %s
+Sms123NotConfigured=module non configur&eacute; (Configuration &rsaquo; Modules &rsaquo; 123-SMS)
+
+# --- configuration
+Sms123SetupTitle=Module SMS 123-SMS.net
+Sms123SetupIntro=Identifiant et cl&eacute; API : transmis par e-mail &agrave; l'inscription sur 123-sms.net (espace client &rsaquo; API).
+Sms123Section1=1. Compte 123-SMS.net
+Sms123Login=Identifiant
+Sms123ApiKey=Cl&eacute; API
+Sms123Sender=Sender-ID (optionnel)
+Sms123SenderHint=nom d'exp&eacute;diteur personnalis&eacute;, &agrave; d&eacute;clarer aupr&egrave;s de 123-SMS
+Sms123AdminNumber=Num&eacute;ro interne (alertes)
+Sms123AdminNumberHint=votre mobile, pour les d&eacute;clencheurs adress&eacute;s &laquo;&nbsp;en interne&nbsp;&raquo;
+Sms123SettingsSaved=R&eacute;glages enregistr&eacute;s.
+Sms123TestButton=Tester la connexion
+Sms123TestHint=Envoi &agrave; blanc : aucun SMS n'est envoy&eacute;, aucun cr&eacute;dit n'est d&eacute;bit&eacute;.
+Sms123DiagTitle=R&eacute;sultat du diagnostic
+Sms123DiagCheck=V&eacute;rification
+Sms123DiagState=&Eacute;tat
+Sms123DiagDetail=D&eacute;tail
+Sms123DiagOk=OK
+Sms123DiagKo=A CORRIGER
+Sms123DiagInfo=info
+Sms123Section2=2. Envois automatiques (aucun code &agrave; &eacute;crire)
+Sms123TrigActive=Actif
+Sms123TrigEvent=&Eacute;v&eacute;nement Dolibarr
+Sms123TrigDest=Destinataire
+Sms123TrigDestClient=Le client
+Sms123TrigDestAdmin=En interne
+Sms123TrigSaved=D&eacute;clencheurs enregistr&eacute;s.
+Sms123TrigSaveButton=Enregistrer les d&eacute;clencheurs
+Sms123Variables=Variables disponibles dans les messages : <code>{ref}</code> num&eacute;ro du document, <code>{societe}</code> nom du client, <code>{total}</code> montant TTC, <code>{date}</code> date du jour, <code>{masociete}</code> votre raison sociale.
+Sms123VariablesDest=Destinataire &laquo;&nbsp;Le client&nbsp;&raquo; : mobile du tiers (&agrave; d&eacute;faut, son t&eacute;l&eacute;phone). &laquo;&nbsp;En interne&nbsp;&raquo; : le num&eacute;ro interne saisi plus haut.
+Sms123EvORDER_VALIDATE=Commande valid&eacute;e
+Sms123EvBILL_VALIDATE=Facture valid&eacute;e
+Sms123EvBILL_PAYED=Facture pay&eacute;e
+Sms123EvSHIPPING_VALIDATE=Exp&eacute;dition valid&eacute;e
+Sms123EvPROPAL_VALIDATE=Devis valid&eacute;
+Sms123Section3=3. Rappels de rendez-vous (t&acirc;che planifi&eacute;e horaire)
+Sms123RdvActive=Activer les rappels
+Sms123RdvTypes=Types d'&eacute;v&eacute;nements concern&eacute;s
+Sms123RdvTypesHint=Ctrl+clic pour en s&eacute;lectionner plusieurs (ex. Rendez-vous).
+Sms123RdvNoType=Aucun type d'&eacute;v&eacute;nement trouv&eacute; (module Agenda actif ?)
+Sms123RdvDelay=D&eacute;lai avant le rendez-vous
+Sms123Hours=heures
+Sms123RdvDelayHint=(24 = la veille &agrave; la m&ecirc;me heure)
+Sms123RdvVariables=Variables : <code>{date}</code> <code>{heure}</code> <code>{label}</code> <code>{societe}</code> <code>{masociete}</code>
+Sms123Section4=4. Relances de factures impay&eacute;es (t&acirc;che planifi&eacute;e quotidienne)
+Sms123RelanceActive=Activer les relances
+Sms123RelanceFrom=Relancer &agrave; partir de
+Sms123RelanceFromHint=jours apr&egrave;s l'&eacute;ch&eacute;ance
+Sms123RelanceRepeat=Ne pas relancer plus d'une fois tous les
+Sms123Days=jours
+Sms123RelanceVariables=Variables : <code>{ref}</code> <code>{total}</code> <code>{date}</code> <code>{societe}</code> <code>{masociete}</code>
+Sms123CronSaved=Rappels et relances enregistr&eacute;s.
+Sms123CronSaveButton=Enregistrer les rappels et relances
+Sms123CronWarning=<b>Important</b> : ces fonctions reposent sur les t&acirc;ches planifi&eacute;es de Dolibarr. Apr&egrave;s activation ici, allez dans <b>Accueil &rsaquo; Configuration &rsaquo; T&acirc;ches planifi&eacute;es</b> et activez les lignes &laquo;&nbsp;123-SMS&nbsp;&raquo; (le cron de Dolibarr doit lui-m&ecirc;me &ecirc;tre en service c&ocirc;t&eacute; serveur).
+Sms123Section5=5. Options avanc&eacute;es
+Sms123ArActive=Demander les accus&eacute;s de r&eacute;ception
+Sms123ArHint=Le statut de remise de chaque SMS remonte alors dans l'historique. Cette option n&eacute;cessite que l'URL de retour ci-dessous soit d&eacute;clar&eacute;e aupr&egrave;s de 123-SMS (support &rsaquo; retour des accus&eacute;s de r&eacute;ception par HTTP).
+Sms123ArUrl=URL de retour &agrave; d&eacute;clarer
+Sms123ArKey=Cl&eacute; de s&eacute;curit&eacute; (optionnelle)
+Sms123ArKeyHint=si vous la renseignez, l'URL &agrave; d&eacute;clarer devient celle indiqu&eacute;e ci-dessus ; les appels sans cette cl&eacute; sont refus&eacute;s.
+Sms123AgendaActive=Tracer les SMS dans l'agenda du client
+Sms123AgendaHint=chaque SMS li&eacute; &agrave; un tiers cr&eacute;e un &eacute;v&eacute;nement sur sa fiche.
+Sms123AlerteActive=Alerte de solde bas
+Sms123AlerteSeuil=Alerter en dessous de
+Sms123AlerteMail=E-mail d'alerte
+Sms123AlerteSms=Envoyer aussi un SMS au num&eacute;ro interne
+Sms123AlerteRepeat=Ne pas alerter plus d'une fois tous les
+Sms123AdvancedSaved=Options avanc&eacute;es enregistr&eacute;es.
+Sms123AdvancedSaveButton=Enregistrer les options avanc&eacute;es
+Sms123FiveWays=<b>Cinq fa&ccedil;ons d'envoyer des SMS depuis Dolibarr</b> : 1) &agrave; la main, menu <b>Outils &rsaquo; SMS 123-SMS</b> (avec historique et solde) ; 2) <b>automatiquement</b> via les d&eacute;clencheurs ci-dessus ; 3) depuis le <b>bouton &laquo;&nbsp;Envoyer un SMS&nbsp;&raquo;</b> des fiches client, devis, commande, facture et exp&eacute;dition ; 4) <b>en masse</b> depuis les listes de tiers et de contacts (action de masse) ; 5) <b>sur mesure</b> dans vos scripts : <code>Sms123Api::envoyer($numero, $message)</code>.
+
+# --- diagnostic
+Sms123DiagLogin=Identifiant renseign&eacute;
+Sms123DiagKey=Cl&eacute; API renseign&eacute;e
+Sms123DiagToFill=&agrave; saisir ci-dessus
+Sms123DiagSender=Sender-ID
+Sms123DiagSenderNone=(aucun : num&eacute;ro court par d&eacute;faut)
+Sms123DiagCurl=Extension cURL de PHP
+Sms123DiagCurlOk=disponible
+Sms123DiagCurlKo=absente : installez php-curl
+Sms123DiagProxy=Proxy Dolibarr
+Sms123DiagProxyOn=actif (%s)
+Sms123DiagProxyOff=aucun (connexion directe)
+Sms123DiagNoCred=test impossible : renseignez d'abord vos identifiants
+Sms123DiagApiCall=Appel de l'API
+Sms123DiagReach=Jointure de www.123-sms.net
+Sms123DiagReachOk=HTTP 200 en %s ms (%s)
+Sms123DiagReachKo=v&eacute;rifiez que le serveur peut sortir en HTTPS (pare-feu, proxy)
+Sms123DiagLocalIp=Votre serveur h&eacute;berge aussi 123-sms.net : le domaine se r&eacute;sout en IP locale. Mettez le module &agrave; jour (1.3.0+).
+Sms123DiagCredOk=Identifiants accept&eacute;s
+Sms123DiagApiAnswer=r&eacute;ponse API : %s - %s
+Sms123DiagBalance=Solde du compte
+Sms123DiagBalanceLeft=%s SMS restants
+Sms123DiagVerdict=Verdict
+Sms123DiagVerdictOk=Connexion op&eacute;rationnelle : vos SMS peuvent partir.
+Sms123DiagVerdictKo=Corrigez l'identifiant et la cl&eacute; API (espace client 123-sms.net &rsaquo; API).
+
+# --- envoi en masse
+Sms123MassTitle=Envoi de SMS en masse
+Sms123MassAction=Envoyer un SMS (123-SMS)
+Sms123MassIntro=S&eacute;lectionnez les destinataires, r&eacute;digez votre message, envoyez. Les num&eacute;ros sont pris sur les fiches ; les destinataires sans num&eacute;ro sont ignor&eacute;s.
+Sms123MassSelection=Destinataires
+Sms123MassNoSelection=Aucune s&eacute;lection : revenez sur la liste des tiers ou des contacts, cochez des lignes puis choisissez l'action de masse &laquo;&nbsp;Envoyer un SMS&nbsp;&raquo;. Vous pouvez aussi saisir des num&eacute;ros libres ci-dessous.
+Sms123MassFreeNumbers=Num&eacute;ros libres
+Sms123MassFreeHint=un num&eacute;ro par ligne (ou s&eacute;par&eacute;s par des virgules)
+Sms123MassNoNumber=aucun num&eacute;ro
+Sms123MassName=Nom
+Sms123MassNumber=Num&eacute;ro
+Sms123MassCount=%s destinataire(s) joignable(s) sur %s s&eacute;lectionn&eacute;(s)
+Sms123MassVariables=Variables : <code>{societe}</code> <code>{contact}</code> <code>{masociete}</code>. Si vous en utilisez une, chaque SMS est personnalis&eacute; (envoi individuel, donc plus lent).
+Sms123MassTest=Envoi &agrave; blanc (rien n'est envoy&eacute; ni d&eacute;bit&eacute;)
+Sms123MassSend=Envoyer &agrave; la s&eacute;lection
+Sms123MassResult=R&eacute;sultat de l'envoi
+Sms123MassDone=%s SMS envoy&eacute;(s), %s en &eacute;chec.
+Sms123MassNoRecipient=Aucun destinataire joignable.
+Sms123MassNoMessage=R&eacute;digez le message &agrave; envoyer.
+Sms123MassLimit=Limite atteinte : %s destinataires au maximum par envoi.
+Sms123MassLowBalance=Attention : votre solde (%s SMS) est inf&eacute;rieur au nombre de destinataires (%s).
+Sms123MassBack=Retour &agrave; l'envoi unitaire
+
+# --- widget d'accueil
+Sms123BoxNone=Aucun SMS envoy&eacute;.
+Sms123BoxSendOne=Envoyer un SMS
+
+# --- taches planifiees et e-mails (texte brut, sans accents ni HTML)
+Sms123CronRdvOff=Rappels de rendez-vous desactives dans la configuration du module.
+Sms123CronRdvNoType=Aucun type d evenement selectionne : rien a faire.
+Sms123CronRdvDone=Rappels de rendez-vous : %s SMS envoye(s), %s ignore(s) (deja rappele ou sans numero).
+Sms123CronRelanceOff=Relances de factures desactivees dans la configuration du module.
+Sms123CronRelanceDone=Relances de factures : %s SMS envoye(s), %s ignore(s) (deja relance ou sans numero).
+Sms123CronSoldeOff=Alerte de solde bas desactivee dans la configuration du module.
+Sms123CronSoldeUnavailable=Solde indisponible : verifiez les identifiants API.
+Sms123CronSoldeOk=Solde suffisant (%s SMS, seuil %s) : aucune alerte.
+Sms123CronSoldeRecent=Alerte deja envoyee recemment : rien a faire.
+Sms123CronSoldeSent=Alerte de solde bas envoyee (%s SMS restants).
+Sms123AlerteMailSubject=123-SMS : solde bas (%s SMS restants)
+Sms123AlerteMailBody=Le solde de credits SMS de votre compte 123-SMS.net est descendu a %s SMS (seuil d alerte : %s). Rechargez votre compte sur https://www.123-sms.net/ pour que vos envois automatiques continuent. Message emis par le module 123-SMS de Dolibarr.
+Sms123AlerteSmsBody=123-SMS : il vous reste %s SMS. Pensez a recharger votre compte.
+Sms123SqlError=Erreur SQL : %s
+Sms123AgendaLabel=SMS envoye au %s

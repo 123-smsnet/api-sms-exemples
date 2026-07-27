@@ -19,16 +19,31 @@ class modSms123 extends DolibarrModules
 		$this->description = 'Envoi de SMS professionnels via 123-SMS.net';
 		$this->descriptionlong = 'Envoi de SMS (rappels, alertes, notifications) via l\'API '
 			.'HTTPS de 123-SMS.net : service francais depuis 2002, credits prepayes '
-			.'sans abonnement. Page d\'envoi + classe reutilisable dans vos triggers.';
+			.'sans abonnement. Page d\'envoi, envoi en masse, declencheurs, rappels de '
+			.'rendez-vous, relances de factures, accuses de reception et classe '
+			.'reutilisable dans vos propres scripts.';
 		$this->editor_name = '123-SMS.net';
 		$this->editor_url = 'https://www.123-sms.net';
-		$this->version = '2.1.1';
+		$this->version = '2.2.0';
 		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
 		$this->picto = 'phone';
 		$this->config_page_url = array('setup.php@sms123');
 		$this->module_parts = array(
 			'triggers' => 1,
-			'hooks' => array('thirdpartycard', 'contactcard', 'propalcard', 'ordercard', 'invoicecard', 'expeditioncard'),
+			'hooks' => array(
+				'thirdpartycard', 'contactcard', 'propalcard', 'ordercard',
+				'invoicecard', 'expeditioncard',
+				'thirdpartylist', 'contactlist',
+			),
+		);
+
+		// Widget disponible sur l'accueil (Accueil > Configuration > Widgets)
+		$this->boxes = array(
+			0 => array(
+				'file' => 'box_sms123.php@sms123',
+				'note' => 'Solde 123-SMS.net et derniers SMS envoyes',
+				'enabledbydefault' => 0,
+			),
 		);
 
 		// Taches planifiees (a activer dans Accueil > Configuration > Taches planifiees)
@@ -61,6 +76,20 @@ class modSms123 extends DolibarrModules
 				'test' => 'isModEnabled("sms123")',
 				'priority' => 51,
 			),
+			2 => array(
+				'label' => 'Alerte de solde bas 123-SMS',
+				'jobtype' => 'method',
+				'class' => '/sms123/class/sms123cron.class.php',
+				'objectname' => 'Sms123Cron',
+				'method' => 'alerteSolde',
+				'parameters' => '',
+				'comment' => 'Previent par e-mail (et par SMS) lorsque le credit du compte 123-SMS passe sous le seuil configure.',
+				'frequency' => 1,
+				'unitfrequency' => 86400,
+				'status' => 0,
+				'test' => 'isModEnabled("sms123")',
+				'priority' => 52,
+			),
 		);
 		$this->depends = array();
 		$this->langfiles = array('sms123@sms123');
@@ -74,12 +103,12 @@ class modSms123 extends DolibarrModules
 		$this->rights[0][3] = 0;
 		$this->rights[0][4] = 'envoyer';
 
-		// Entree de menu (Outils > SMS 123-SMS)
+		// Entrees de menu (Outils > SMS 123-SMS)
 		$this->menu = array();
 		$this->menu[0] = array(
 			'fk_menu' => 'fk_mainmenu=tools',
 			'type' => 'left',
-			'titre' => 'SMS 123-SMS',
+			'titre' => 'Sms123Menu',
 			'mainmenu' => 'tools',
 			'leftmenu' => 'sms123',
 			'url' => '/sms123/sms123index.php',
@@ -90,10 +119,24 @@ class modSms123 extends DolibarrModules
 			'target' => '',
 			'user' => 2,
 		);
+		$this->menu[1] = array(
+			'fk_menu' => 'fk_mainmenu=tools,fk_leftmenu=sms123',
+			'type' => 'left',
+			'titre' => 'Sms123MenuMass',
+			'mainmenu' => 'tools',
+			'leftmenu' => 'sms123masse',
+			'url' => '/sms123/sms123masse.php',
+			'langs' => 'sms123@sms123',
+			'position' => 1001,
+			'enabled' => 'isModEnabled("sms123")',
+			'perms' => '$user->hasRight("sms123", "envoyer")',
+			'target' => '',
+			'user' => 2,
+		);
 	}
 
 	/**
-	 * Activation du module : creation de la table d'historique.
+	 * Activation du module : creation puis mise a jour de la table d'historique.
 	 *
 	 * @param string $options options
 	 * @return int
@@ -104,8 +147,49 @@ class modSms123 extends DolibarrModules
 		if ($resultat < 0) {
 			return -1;
 		}
+		$this->migrer();
 
 		return $this->_init(array(), $options);
+	}
+
+	/**
+	 * Ajoute les colonnes apparues apres la version 2.1 sur une base deja
+	 * installee (fk_soc, reference, statut, date_ar, erreur_ar). Les colonnes
+	 * deja presentes sont detectees avant tout ALTER : aucune erreur SQL
+	 * n'est provoquee sur une base a jour.
+	 *
+	 * @return int 1
+	 */
+	public function migrer()
+	{
+		$table = MAIN_DB_PREFIX.'sms123_envoi';
+		$colonnes = array(
+			'fk_soc' => 'integer NULL',
+			'reference' => 'varchar(64) NULL',
+			'statut' => 'varchar(16) NULL',
+			'date_ar' => 'datetime NULL',
+			'erreur_ar' => 'varchar(64) NULL',
+		);
+
+		$existantes = array();
+		$resql = $this->db->query('SELECT * FROM '.$table.' WHERE 1 = 0');
+		if (!$resql) {
+			return 1; // table absente : rien a migrer
+		}
+		$nb = $this->db->num_fields($resql);
+		for ($i = 0; $i < $nb; $i++) {
+			$existantes[strtolower($this->db->field_name($resql, $i))] = 1;
+		}
+		$this->db->free($resql);
+
+		foreach ($colonnes as $nom => $type) {
+			if (isset($existantes[$nom])) {
+				continue;
+			}
+			$this->db->query('ALTER TABLE '.$table.' ADD COLUMN '.$nom.' '.$type);
+		}
+
+		return 1;
 	}
 
 	/**
