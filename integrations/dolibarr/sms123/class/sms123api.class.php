@@ -293,6 +293,11 @@ class Sms123Api
 		if (!getDolGlobalString('SMS123_AGENDA') || $socid <= 0) {
 			return 0;
 		}
+		// ActionComm::create() attend un objet User : sans utilisateur courant
+		// (script CLI par exemple), on n'ecrit simplement pas dans l'agenda.
+		if (!is_object($user)) {
+			return 0;
+		}
 		if (!file_exists(DOL_DOCUMENT_ROOT.'/comm/action/class/actioncomm.class.php')) {
 			return 0;
 		}

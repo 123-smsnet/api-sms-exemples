@@ -154,9 +154,13 @@ class modSms123 extends DolibarrModules
 
 	/**
 	 * Ajoute les colonnes apparues apres la version 2.1 sur une base deja
-	 * installee (fk_soc, reference, statut, date_ar, erreur_ar). Les colonnes
-	 * deja presentes sont detectees avant tout ALTER : aucune erreur SQL
-	 * n'est provoquee sur une base a jour.
+	 * installee (fk_soc, reference, statut, date_ar, erreur_ar).
+	 *
+	 * La presence d'une colonne est testee par un SELECT qui ne ramene aucune
+	 * ligne : s'il aboutit, la colonne existe et rien n'est fait ; sinon elle
+	 * est ajoutee. On n'utilise ici que query() et free(), presentes sur tous
+	 * les pilotes de base de Dolibarr : la methode ne peut pas interrompre
+	 * l'activation du module.
 	 *
 	 * @return int 1
 	 */
@@ -171,19 +175,10 @@ class modSms123 extends DolibarrModules
 			'erreur_ar' => 'varchar(64) NULL',
 		);
 
-		$existantes = array();
-		$resql = $this->db->query('SELECT * FROM '.$table.' WHERE 1 = 0');
-		if (!$resql) {
-			return 1; // table absente : rien a migrer
-		}
-		$nb = $this->db->num_fields($resql);
-		for ($i = 0; $i < $nb; $i++) {
-			$existantes[strtolower($this->db->field_name($resql, $i))] = 1;
-		}
-		$this->db->free($resql);
-
 		foreach ($colonnes as $nom => $type) {
-			if (isset($existantes[$nom])) {
+			$test = $this->db->query('SELECT '.$nom.' FROM '.$table.' WHERE 1 = 0');
+			if ($test) {
+				$this->db->free($test);
 				continue;
 			}
 			$this->db->query('ALTER TABLE '.$table.' ADD COLUMN '.$nom.' '.$type);
