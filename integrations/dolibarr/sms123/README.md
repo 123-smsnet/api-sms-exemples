@@ -71,6 +71,21 @@ Le module n'apparait pas dans la liste ?
 5. Hebergement mutualise : verifiez que le transfert FTP est
    complet (6 fichiers) et n'a pas ete interrompu.
 
+Tester la connexion
+-------------------
+L'ecran de configuration du module comporte un bouton
+« Tester la connexion » : il effectue un envoi A BLANC (rien n'est
+envoye, rien n'est debite) et affiche un diagnostic complet :
+identifiants renseignes, extension cURL, proxy Dolibarr, jointure de
+www.123-sms.net (code HTTP et temps de reponse), validite des
+identifiants, et un verdict clair. C'est le premier reflexe en cas de
+probleme d'envoi.
+
+Erreur « appel API impossible (HTTP 400) » sur les versions < 1.2.0 :
+corrigee. Mettez a jour le module (le corps de la requete etait
+re-encode par le client HTTP de Dolibarr). La version 1.2.0 bascule
+aussi automatiquement en GET si un pare-feu refuse le POST.
+
 Le menu « Outils > SMS 123-SMS » n'apparait pas ?
 ------------------------------------------------
 Les entrees de menu sont enregistrees en base au moment de l'activation
