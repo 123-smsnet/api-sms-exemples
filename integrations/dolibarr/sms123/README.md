@@ -71,6 +71,24 @@ Le module n'apparait pas dans la liste ?
 5. Hebergement mutualise : verifiez que le transfert FTP est
    complet (6 fichiers) et n'a pas ete interrompu.
 
+La roue crantee (configuration) renvoie une erreur 404 ?
+-------------------------------------------------------
+L'URL affichee est /sms123/admin/setup.php au lieu de
+/custom/sms123/admin/setup.php : Dolibarr n'a pas trouve le fichier
+sur le disque au moment de construire le lien.
+1. Verifiez que custom/sms123/admin/setup.php existe et est lisible ;
+2. Si le fichier est arrive apres un premier transfert incomplet, PHP
+   garde en cache l'ancien resultat : rechargez la page apres deux
+   minutes, purgez le cache Dolibarr (Configuration > Divers) ou
+   rechargez PHP-FPM ;
+3. En attendant, la page de configuration reste accessible en direct :
+   https://votre-dolibarr/custom/sms123/admin/setup.php
+
+Conseil de transfert : dezippez l'archive sur votre poste PUIS envoyez
+le dossier sms123 par FTP (ou envoyez le zip et dezippez-le sur le
+serveur). Envoyer le zip sans le decompresser, ou un transfert
+interrompu, laisse une arborescence vide : le module reste invisible.
+
 Compatibilite : Dolibarr 14 et plus, PHP 7.0 a 8.4.
 Multi-entites supporte (configuration par entite).
 
