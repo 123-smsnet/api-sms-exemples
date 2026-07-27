@@ -48,11 +48,28 @@ Rappels de rendez-vous et relances de factures (automatiques)
 -------------------------------------------------------------
 Le module fournit deux taches planifiees, desactivees par defaut :
 
-- RAPPELS DE RENDEZ-VOUS : SMS envoye X heures avant les evenements de
-  l agenda dont le TYPE est coche dans la configuration (par exemple
-  « Rendez-vous » uniquement). Le numero est pris sur le contact de
-  l evenement, a defaut sur le tiers. Anti-doublon : un seul rappel par
-  evenement. Variables : {date} {heure} {label} {societe} {masociete}.
+- RAPPELS DE RENDEZ-VOUS : SMS envoye avant les evenements de l agenda
+  dont le TYPE est coche dans la configuration (par exemple
+  « Rendez-vous » uniquement). Le rappel part des que l evenement entre
+  dans la fenetre choisie (24 h par defaut), une seule fois par
+  evenement : la tache peut donc tourner toutes les heures comme trois
+  fois par jour, aucun rendez-vous n est saute.
+
+  NUMERO UTILISE, dans cet ordre :
+    1. contact lie a l evenement : Mobile, puis Personnel, puis Professionnel
+    2. a defaut, tiers lie a l evenement : Mobile, puis Telephone
+  Le premier champ renseigne gagne ; si aucun ne l est, l evenement est
+  ignore. Le contact est cherche aussi bien sur le champ historique de
+  l evenement que dans ses ressources (ou Dolibarr enregistre les
+  contacts depuis la version 9).
+
+  Le bouton « Tester la selection » de la configuration affiche, sans
+  rien envoyer, la liste exacte des evenements concernes en ce moment,
+  le numero trouve pour chacun, le champ d ou il vient et son etat
+  (sera envoye / deja rappele / aucun numero). C est le premier reflexe
+  si un rappel n arrive pas.
+
+  Variables : {date} {heure} {label} {societe} {masociete}.
 
 - RELANCES DE FACTURES IMPAYEES : SMS aux clients dont la facture
   validee et non payee est echue depuis X jours, avec un intervalle

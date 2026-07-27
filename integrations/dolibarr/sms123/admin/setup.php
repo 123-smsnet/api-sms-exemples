@@ -275,6 +275,8 @@ if ($onglet == 'rappels') {
 	print '<tr class="oddeven"><td>'.$langs->transnoentities('Sms123RdvDelay').'</td><td>'
 		.'<input type="number" name="rdv_heures" min="1" max="168" value="'.($heures > 0 ? $heures : 24).'" style="width:80px;"> '
 		.$langs->transnoentities('Sms123Hours').' <span class="opacitymedium">'.$langs->transnoentities('Sms123RdvDelayHint').'</span></td></tr>';
+	print '<tr class="oddeven"><td>'.$langs->transnoentities('Sms123RdvSource').'</td><td class="opacitymedium">'
+		.$langs->transnoentities('Sms123RdvFields').'</td></tr>';
 	$tplrdv = getDolGlobalString('SMS123_RDV_TPL');
 	print '<tr class="oddeven"><td>'.$langs->transnoentities('Sms123Message').'</td><td>'
 		.'<input type="text" name="rdv_tpl" class="quatrevingtpercent" value="'
@@ -301,6 +303,62 @@ if ($onglet == 'rappels') {
 	print '<div class="opacitymedium" style="margin:8px 0;">'.$langs->transnoentities('Sms123CronWarning').'</div>';
 	print '<div class="center"><input type="submit" class="button" value="'.dol_escape_htmltag($langs->transnoentities('Sms123CronSaveButton')).'"></div>';
 	print '</form>';
+
+	// --------------------------------------------- test de la selection
+	print '<br><form method="POST" action="'.$_SERVER['PHP_SELF'].'">';
+	print '<input type="hidden" name="token" value="'.newToken().'">';
+	print '<input type="hidden" name="action" value="testrdv">';
+	print sms123_champ_onglet('rappels');
+	print '<div class="center"><input type="submit" class="button button-save" value="'
+		.dol_escape_htmltag($langs->transnoentities('Sms123RdvTestButton')).'">';
+	print '<br><span class="opacitymedium">'.$langs->transnoentities('Sms123RdvTestHint').'</span></div>';
+	print '</form>';
+
+	if ($action == 'testrdv') {
+		print '<br>';
+		print load_fiche_titre($langs->transnoentities('Sms123RdvTestTitle'), '', 'generic');
+
+		if (!getDolGlobalString('SMS123_RDV_ACTIF')) {
+			print '<div class="warning">'.$langs->transnoentities('Sms123RdvTestOff').'</div>';
+		}
+
+		dol_include_once('/sms123/class/sms123cron.class.php');
+		$selection = Sms123Cron::candidatsRappels($db);
+
+		if ($selection['erreur'] !== '') {
+			print '<div class="error">'.dol_escape_htmltag($selection['erreur']).'</div>';
+		} elseif (!count($selection['types'])) {
+			print '<div class="warning">'.$langs->transnoentities('Sms123CronRdvNoType').'</div>';
+		} elseif (!count($selection['lignes'])) {
+			print '<div class="opacitymedium">'
+				.$langs->transnoentities('Sms123RdvTestNone', $selection['heures']).'</div>';
+		} else {
+			$etats = array(
+				'a-envoyer' => array('Sms123RdvStateToSend', '#268614'),
+				'deja' => array('Sms123RdvStateDone', '#666666'),
+				'sans-numero' => array('Sms123RdvStateNoNumber', '#c83232'),
+			);
+			print '<table class="noborder centpercent">';
+			print '<tr class="liste_titre"><td>'.$langs->transnoentities('Sms123Date').'</td>'
+				.'<td>'.$langs->transnoentities('Sms123RdvEvent').'</td>'
+				.'<td>'.$langs->transnoentities('Sms123RdvThirdParty').'</td>'
+				.'<td>'.$langs->transnoentities('Sms123MassNumber').'</td>'
+				.'<td>'.$langs->transnoentities('Sms123RdvSource').'</td>'
+				.'<td>'.$langs->transnoentities('Sms123RdvState').'</td></tr>';
+			foreach ($selection['lignes'] as $ligne) {
+				list($cleetat, $couleur) = $etats[$ligne['etat']];
+				print '<tr class="oddeven">';
+				print '<td class="nowraponall">'.dol_print_date($ligne['datep'], 'dayhour').'</td>';
+				print '<td>'.dol_escape_htmltag($ligne['label']).'</td>';
+				print '<td>'.dol_escape_htmltag($ligne['societe']).'</td>';
+				print '<td>'.dol_escape_htmltag($ligne['numero']).'</td>';
+				print '<td class="opacitymedium">'.dol_escape_htmltag($ligne['source']).'</td>';
+				print '<td style="color:'.$couleur.'">'.$langs->transnoentities($cleetat).'</td>';
+				print '</tr>';
+			}
+			print '</table>';
+		}
+	}
 }
 
 // =================================================== onglet : options avancees

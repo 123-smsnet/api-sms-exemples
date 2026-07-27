@@ -12,9 +12,12 @@ class Sms123Cron
 	public $error = '';
 
 	/**
-	 * Rappels de rendez-vous : SMS X heures avant les evenements d'agenda
-	 * dont le type est coche dans la configuration du module.
-	 * A planifier toutes les heures.
+	 * Rappels de rendez-vous : un SMS par evenement d'agenda dont le type est
+	 * coche dans la configuration, des qu'il entre dans la fenetre choisie.
+	 *
+	 * La selection est faite par candidatsRappels(), utilisee telle quelle par
+	 * le bouton « Tester la selection » de la configuration : ce qui est
+	 * affiche la est exactement ce que cette tache enverra.
 	 *
 	 * @return int 0 si OK
 	 */
@@ -31,74 +34,122 @@ class Sms123Cron
 			return 0;
 		}
 
-		$listeTypes = array();
+		$selection = self::candidatsRappels($db);
+		if ($selection['erreur'] !== '') {
+			$this->error = $selection['erreur'];
+			return -1;
+		}
+		if (!count($selection['types'])) {
+			$this->output = Sms123Api::t('Sms123CronRdvNoType');
+			return 0;
+		}
+
+		$modele = getDolGlobalString('SMS123_RDV_TPL');
+		if (empty($modele)) {
+			$modele = 'Rappel : rendez-vous le {date} a {heure}. {masociete}';
+		}
+
+		$envoyes = 0;
+		$ignores = 0;
+		$detail = '';
+		foreach ($selection['lignes'] as $ligne) {
+			if ($ligne['etat'] != 'a-envoyer') {
+				$ignores++;
+				continue;
+			}
+
+			$message = strtr($modele, self::variablesEvenement($db, $ligne['objet']));
+			$code = Sms123Api::envoyer($ligne['numero'], $message, 0,
+				'rappel-rdv#'.$ligne['id'], (int) $ligne['objet']->fk_soc);
+			if (in_array($code, array('80', '81'), true)) {
+				$envoyes++;
+			} else {
+				$detail .= 'Evenement '.$ligne['id'].' : code '.$code.'. ';
+			}
+		}
+
+		$this->output = Sms123Api::t('Sms123CronRdvDone', $envoyes, $ignores).' '.$detail;
+
+		return 0;
+	}
+
+	/**
+	 * Evenements d'agenda qui entrent dans la fenetre de rappel, avec le
+	 * numero trouve pour chacun et son etat.
+	 *
+	 * Fenetre : tout evenement qui commence entre maintenant et maintenant +
+	 * X heures. Un evenement deja rappele est ignore (une seule fois par
+	 * evenement), ce qui rend la tache insensible a l'heure exacte a laquelle
+	 * elle tourne : qu'elle s'execute toutes les heures ou trois fois par
+	 * jour, aucun rendez-vous n'est saute.
+	 *
+	 * @param DoliDB $db  base
+	 * @param int    $max nombre maximum d'evenements examines
+	 * @return array      erreur, heures, types, lignes (id, datep, label,
+	 *                    societe, numero, source, etat, objet)
+	 */
+	public static function candidatsRappels($db, $max = 200)
+	{
+		dol_include_once('/sms123/class/sms123api.class.php');
+
+		$resultat = array('erreur' => '', 'heures' => 24, 'types' => array(), 'lignes' => array());
+
 		foreach (explode(',', getDolGlobalString('SMS123_RDV_TYPES')) as $t) {
 			$t = (int) trim($t);
 			if ($t > 0) {
-				$listeTypes[] = $t;
+				$resultat['types'][] = $t;
 			}
 		}
-		if (!count($listeTypes)) {
-			$this->output = Sms123Api::t('Sms123CronRdvNoType');
-			return 0;
+		if (!count($resultat['types'])) {
+			return $resultat;
 		}
 
 		$heures = (int) getDolGlobalString('SMS123_RDV_HEURES');
 		if ($heures <= 0) {
 			$heures = 24;
 		}
-		$modele = getDolGlobalString('SMS123_RDV_TPL');
-		if (empty($modele)) {
-			$modele = 'Rappel : rendez-vous le {date} a {heure}. {masociete}';
-		}
+		$resultat['heures'] = $heures;
 
-		// Fenetre d une heure autour de l echeance (le cron tourne chaque heure)
-		$debut = dol_now() + ($heures * 3600);
-		$fin = $debut + 3600;
-
+		$maintenant = dol_now();
 		$sql = 'SELECT a.id, a.datep, a.label, a.fk_soc, a.fk_contact';
 		$sql .= ' FROM '.MAIN_DB_PREFIX.'actioncomm as a';
 		$sql .= ' WHERE a.entity IN ('.getEntity('agenda').')';
-		$sql .= ' AND a.fk_action IN ('.$db->sanitize(implode(',', $listeTypes)).')';
-		$sql .= " AND a.datep >= '".$db->idate($debut)."'";
-		$sql .= " AND a.datep < '".$db->idate($fin)."'";
+		$sql .= ' AND a.fk_action IN ('.$db->sanitize(implode(',', $resultat['types'])).')';
+		$sql .= " AND a.datep >= '".$db->idate($maintenant)."'";
+		$sql .= " AND a.datep <= '".$db->idate($maintenant + ($heures * 3600))."'";
 		$sql .= ' ORDER BY a.datep';
+		$sql .= $db->plimit($max, 0);
 
 		$resql = $db->query($sql);
 		if (!$resql) {
-			$this->error = Sms123Api::t('Sms123SqlError', $db->lasterror());
-			return -1;
+			$resultat['erreur'] = Sms123Api::t('Sms123SqlError', $db->lasterror());
+			return $resultat;
 		}
 
-		$envoyes = 0;
-		$ignores = 0;
-		$detail = '';
 		while ($obj = $db->fetch_object($resql)) {
-			$origine = 'rappel-rdv#'.$obj->id;
-			if (self::dejaEnvoye($db, $origine, 0)) {
-				$ignores++;
-				continue;
-			}
-
-			$numero = self::numeroEvenement($db, $obj->fk_contact, $obj->fk_soc);
-			if (empty($numero)) {
-				$ignores++;
-				continue;
-			}
-
-			$message = strtr($modele, self::variablesEvenement($db, $obj));
-			$code = Sms123Api::envoyer($numero, $message, 0, $origine, (int) $obj->fk_soc);
-			if (in_array($code, array('80', '81'), true)) {
-				$envoyes++;
+			$trouve = self::numeroEvenement($db, $obj->fk_contact, $obj->fk_soc, $obj->id);
+			if (self::dejaEnvoye($db, 'rappel-rdv#'.$obj->id, 0)) {
+				$etat = 'deja';
+			} elseif ($trouve['numero'] === '') {
+				$etat = 'sans-numero';
 			} else {
-				$detail .= 'Evenement '.$obj->id.' : code '.$code.'. ';
+				$etat = 'a-envoyer';
 			}
+
+			$resultat['lignes'][] = array(
+				'id' => (int) $obj->id,
+				'datep' => $db->jdate($obj->datep),
+				'label' => empty($obj->label) ? '' : $obj->label,
+				'societe' => self::nomTiers($db, $obj->fk_soc),
+				'numero' => $trouve['numero'],
+				'source' => $trouve['source'],
+				'etat' => $etat,
+				'objet' => $obj,
+			);
 		}
 		$db->free($resql);
 
-		$this->output = Sms123Api::t('Sms123CronRdvDone', $envoyes, $ignores).' '.$detail;
-
-		return 0;
+		return $resultat;
 	}
 
 	/**
@@ -160,8 +211,8 @@ class Sms123Cron
 				continue;
 			}
 
-			$numero = self::numeroTiers($db, $obj->fk_soc);
-			if (empty($numero)) {
+			$trouve = self::numeroTiers($db, $obj->fk_soc);
+			if ($trouve['numero'] === '') {
 				$ignores++;
 				continue;
 			}
@@ -174,7 +225,7 @@ class Sms123Cron
 				'{masociete}' => self::maSociete(),
 			));
 
-			$code = Sms123Api::envoyer($numero, $message, 0, $origine, (int) $obj->fk_soc);
+			$code = Sms123Api::envoyer($trouve['numero'], $message, 0, $origine, (int) $obj->fk_soc);
 			if (in_array($code, array('80', '81'), true)) {
 				$envoyes++;
 			} else {
@@ -296,17 +347,39 @@ class Sms123Cron
 		return $trouve;
 	}
 
-	/** Numero de mobile : contact de l evenement en priorite, sinon tiers. */
-	public static function numeroEvenement($db, $fk_contact, $fk_soc)
+	/**
+	 * Numero de mobile d'un evenement d'agenda, dans cet ordre :
+	 *   1. contact lie a l'evenement    : mobile, perso, professionnel
+	 *   2. tiers lie a l'evenement      : mobile, telephone
+	 *
+	 * Le contact est cherche sur le champ historique fk_contact ET dans la
+	 * table des ressources de l'evenement (llx_actioncomm_resources), ou
+	 * Dolibarr enregistre les contacts depuis la version 9.
+	 *
+	 * @param DoliDB $db          base
+	 * @param int    $fk_contact  contact historique de l evenement
+	 * @param int    $fk_soc      tiers de l evenement
+	 * @param int    $id          identifiant de l evenement
+	 * @return array              numero, source (champ utilise)
+	 */
+	public static function numeroEvenement($db, $fk_contact, $fk_soc, $id = 0)
 	{
+		$champs = array(
+			'phone_mobile' => 'contact.phone_mobile',
+			'phone_perso' => 'contact.phone_perso',
+			'phone_pro' => 'contact.phone_pro',
+		);
+
+		// 1a. contact historique de l evenement
 		if ($fk_contact > 0) {
-			$sql = 'SELECT phone_mobile, phone_perso, phone_pro FROM '.MAIN_DB_PREFIX.'socpeople WHERE rowid = '.((int) $fk_contact);
+			$sql = 'SELECT phone_mobile, phone_perso, phone_pro FROM '.MAIN_DB_PREFIX.'socpeople';
+			$sql .= ' WHERE rowid = '.((int) $fk_contact);
 			$resql = $db->query($sql);
 			if ($resql && ($obj = $db->fetch_object($resql))) {
-				foreach (array('phone_mobile', 'phone_perso', 'phone_pro') as $champ) {
+				foreach ($champs as $champ => $source) {
 					if (!empty($obj->$champ)) {
 						$db->free($resql);
-						return $obj->$champ;
+						return array('numero' => $obj->$champ, 'source' => $source);
 					}
 				}
 			}
@@ -315,26 +388,69 @@ class Sms123Cron
 			}
 		}
 
+		// 1b. contacts declares comme ressources de l evenement
+		if ($id > 0) {
+			$sql = 'SELECT sp.phone_mobile, sp.phone_perso, sp.phone_pro';
+			$sql .= ' FROM '.MAIN_DB_PREFIX.'actioncomm_resources as ar';
+			$sql .= ' INNER JOIN '.MAIN_DB_PREFIX.'socpeople as sp ON sp.rowid = ar.fk_element';
+			$sql .= ' WHERE ar.fk_actioncomm = '.((int) $id);
+			$sql .= " AND ar.element_type = 'socpeople'";
+			$sql .= ' ORDER BY ar.rowid';
+			$resql = $db->query($sql);
+			if ($resql) {
+				while ($obj = $db->fetch_object($resql)) {
+					foreach ($champs as $champ => $source) {
+						if (!empty($obj->$champ)) {
+							$db->free($resql);
+							return array('numero' => $obj->$champ, 'source' => $source);
+						}
+					}
+				}
+				$db->free($resql);
+			}
+		}
+
+		// 2. tiers de l evenement
 		return self::numeroTiers($db, $fk_soc);
 	}
 
-	/** Numero de mobile d un tiers. */
+	/**
+	 * Numero de mobile d'un tiers : champ « Mobile » en priorite, sinon
+	 * « Telephone ». La colonne phone_mobile n'existe pas sur toutes les
+	 * versions de Dolibarr, d'ou la requete de repli.
+	 *
+	 * @param DoliDB $db     base
+	 * @param int    $fk_soc tiers
+	 * @return array         numero, source (champ utilise)
+	 */
 	public static function numeroTiers($db, $fk_soc)
 	{
+		$vide = array('numero' => '', 'source' => '');
 		if ($fk_soc <= 0) {
-			return '';
-		}
-		$sql = 'SELECT phone FROM '.MAIN_DB_PREFIX.'societe WHERE rowid = '.((int) $fk_soc);
-		$resql = $db->query($sql);
-		$numero = '';
-		if ($resql && ($obj = $db->fetch_object($resql))) {
-			$numero = empty($obj->phone) ? '' : $obj->phone;
-		}
-		if ($resql) {
-			$db->free($resql);
+			return $vide;
 		}
 
-		return $numero;
+		$sql = 'SELECT phone, phone_mobile FROM '.MAIN_DB_PREFIX.'societe WHERE rowid = '.((int) $fk_soc);
+		$resql = $db->query($sql);
+		if (!$resql) {
+			$sql = 'SELECT phone FROM '.MAIN_DB_PREFIX.'societe WHERE rowid = '.((int) $fk_soc);
+			$resql = $db->query($sql);
+		}
+		if (!$resql) {
+			return $vide;
+		}
+
+		$trouve = $vide;
+		if ($obj = $db->fetch_object($resql)) {
+			if (!empty($obj->phone_mobile)) {
+				$trouve = array('numero' => $obj->phone_mobile, 'source' => 'tiers.phone_mobile');
+			} elseif (!empty($obj->phone)) {
+				$trouve = array('numero' => $obj->phone, 'source' => 'tiers.phone');
+			}
+		}
+		$db->free($resql);
+
+		return $trouve;
 	}
 
 	/** Nom du tiers. */
