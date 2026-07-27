@@ -1,7 +1,7 @@
 <?php
 /* Module 123-SMS pour Dolibarr - envoi de SMS professionnels
  * Copyright (C) 123-Sms.net - licence MIT
- * Squelette standard Dolibarr (14+). Dossier : htdocs/custom/sms123/
+ * Squelette standard Dolibarr (16+). Dossier : htdocs/custom/sms123/
  */
 include_once DOL_DOCUMENT_ROOT.'/core/modules/DolibarrModules.class.php';
 
@@ -22,14 +22,14 @@ class modSms123 extends DolibarrModules
 			.'sans abonnement. Page d\'envoi + classe reutilisable dans vos triggers.';
 		$this->editor_name = '123-SMS.net';
 		$this->editor_url = 'https://www.123-sms.net';
-		$this->version = '1.0.5';
+		$this->version = '1.1.0';
 		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
 		$this->picto = 'phone';
 		$this->config_page_url = array('setup.php@sms123');
 		$this->depends = array();
 		$this->langfiles = array('sms123@sms123');
 		$this->phpmin = array(7, 0);
-		$this->need_dolibarr_version = array(14, 0);
+		$this->need_dolibarr_version = array(16, 0);
 
 		// Permission : envoyer des SMS
 		$this->rights = array();
@@ -49,8 +49,8 @@ class modSms123 extends DolibarrModules
 			'url' => '/sms123/sms123index.php',
 			'langs' => 'sms123@sms123',
 			'position' => 1000,
-			'enabled' => '$conf->sms123->enabled',
-			'perms' => '$user->rights->sms123->envoyer',
+			'enabled' => 'isModEnabled("sms123")',
+			'perms' => '$user->hasRight("sms123", "envoyer")',
 			'target' => '',
 			'user' => 2,
 		);

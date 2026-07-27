@@ -71,6 +71,23 @@ Le module n'apparait pas dans la liste ?
 5. Hebergement mutualise : verifiez que le transfert FTP est
    complet (6 fichiers) et n'a pas ete interrompu.
 
+Le menu « Outils > SMS 123-SMS » n'apparait pas ?
+------------------------------------------------
+Les entrees de menu sont enregistrees en base au moment de l'activation
+du module. Si vous avez mis a jour le module apres l'avoir active, ou si
+le menu a ete cree avec une ancienne version :
+
+1. Configuration > Modules : DESACTIVEZ le module, puis REACTIVEZ-le
+   (les reglages identifiant / cle API sont conserves) ;
+2. Verifiez que l'utilisateur a la permission « Envoyer des SMS via
+   123-SMS » (Utilisateurs & groupes > onglet Permissions) — un
+   administrateur l'a d'office ;
+3. Le menu se trouve dans le menu du HAUT « Outils », colonne de
+   gauche : il n'apparait qu'apres avoir clique sur Outils.
+
+La page reste accessible en direct :
+   https://votre-dolibarr/custom/sms123/sms123index.php
+
 La roue crantee (configuration) renvoie une erreur 404 ?
 -------------------------------------------------------
 L'URL affichee est /sms123/admin/setup.php au lieu de
@@ -98,7 +115,7 @@ le dossier sms123 par FTP (ou envoyez le zip et dezippez-le sur le
 serveur). Envoyer le zip sans le decompresser, ou un transfert
 interrompu, laisse une arborescence vide : le module reste invisible.
 
-Compatibilite : Dolibarr 14 et plus, PHP 7.0 a 8.4.
+Compatibilite : Dolibarr 16 et plus, PHP 7.0 a 8.4.
 Multi-entites supporte (configuration par entite).
 
 Envois automatiques (relance facture, commande prete...) : la classe
