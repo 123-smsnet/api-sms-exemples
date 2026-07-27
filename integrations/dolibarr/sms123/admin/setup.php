@@ -30,6 +30,18 @@ if ($action == 'save') {
 	setEventMessages('Reglages enregistres.', null, 'mesgs');
 }
 
+if ($action == 'savecron') {
+	dolibarr_set_const($db, 'SMS123_RDV_ACTIF', GETPOST('rdv_actif', 'int') ? 1 : 0, 'chaine', 0, '', $conf->entity);
+	dolibarr_set_const($db, 'SMS123_RDV_TYPES', implode(',', array_map('intval', GETPOST('rdv_types', 'array'))), 'chaine', 0, '', $conf->entity);
+	dolibarr_set_const($db, 'SMS123_RDV_HEURES', (int) GETPOST('rdv_heures', 'int'), 'chaine', 0, '', $conf->entity);
+	dolibarr_set_const($db, 'SMS123_RDV_TPL', GETPOST('rdv_tpl', 'restricthtml'), 'chaine', 0, '', $conf->entity);
+	dolibarr_set_const($db, 'SMS123_RELANCE_ACTIF', GETPOST('relance_actif', 'int') ? 1 : 0, 'chaine', 0, '', $conf->entity);
+	dolibarr_set_const($db, 'SMS123_RELANCE_JOURS', (int) GETPOST('relance_jours', 'int'), 'chaine', 0, '', $conf->entity);
+	dolibarr_set_const($db, 'SMS123_RELANCE_REPETER', (int) GETPOST('relance_repeter', 'int'), 'chaine', 0, '', $conf->entity);
+	dolibarr_set_const($db, 'SMS123_RELANCE_TPL', GETPOST('relance_tpl', 'restricthtml'), 'chaine', 0, '', $conf->entity);
+	setEventMessages('Rappels et relances enregistres.', null, 'mesgs');
+}
+
 if ($action == 'savetrig') {
 	foreach (array_keys($evenements) as $ev) {
 		dolibarr_set_const($db, 'SMS123_TRIG_'.$ev, GETPOST('trig_'.$ev, 'int') ? 1 : 0, 'chaine', 0, '', $conf->entity);
@@ -140,10 +152,75 @@ print '<div class="opacitymedium" style="margin:8px 0;">Variables disponibles da
 print '<div class="center"><input type="submit" class="button" value="Enregistrer les declencheurs"></div>';
 print '</form>';
 
-print '<br><br><span class="opacitymedium"><b>Trois fa&ccedil;ons d\'envoyer des SMS depuis Dolibarr</b>&nbsp;: '
+// --------------------------------------------------- rappels et relances
+print '<br>';
+print '<form method="POST" action="'.$_SERVER['PHP_SELF'].'">';
+print '<input type="hidden" name="token" value="'.newToken().'">';
+print '<input type="hidden" name="action" value="savecron">';
+print '<table class="noborder centpercent">';
+print '<tr class="liste_titre"><td colspan="2">3. Rappels de rendez-vous (t&acirc;che planifi&eacute;e horaire)</td></tr>';
+print '<tr class="oddeven"><td class="titlefield">Activer les rappels</td><td>'
+	.'<input type="checkbox" name="rdv_actif" value="1"'.(getDolGlobalString('SMS123_RDV_ACTIF') ? ' checked' : '').'></td></tr>';
+
+// types d'evenements de l'agenda
+$types = array();
+$sqlt = 'SELECT id, code, libelle FROM '.MAIN_DB_PREFIX.'c_actioncomm WHERE active = 1 ORDER BY position, libelle';
+$resqlt = $db->query($sqlt);
+if ($resqlt) {
+	while ($obj = $db->fetch_object($resqlt)) {
+		$types[$obj->id] = empty($obj->libelle) ? $obj->code : $obj->libelle;
+	}
+	$db->free($resqlt);
+}
+$choisis = explode(',', getDolGlobalString('SMS123_RDV_TYPES'));
+print '<tr class="oddeven"><td>Types d\'&eacute;v&eacute;nements concern&eacute;s</td><td>';
+if (count($types)) {
+	print '<select name="rdv_types[]" multiple size="6" style="min-width:280px;">';
+	foreach ($types as $id => $libelle) {
+		print '<option value="'.((int) $id).'"'.(in_array((string) $id, $choisis, true) ? ' selected' : '').'>'
+			.dol_escape_htmltag($libelle).'</option>';
+	}
+	print '</select><br><span class="opacitymedium">Ctrl+clic pour en s&eacute;lectionner plusieurs (ex. Rendez-vous).</span>';
+} else {
+	print '<span class="opacitymedium">Aucun type d\'&eacute;v&eacute;nement trouv&eacute; (module Agenda actif ?)</span>';
+}
+print '</td></tr>';
+
+$heures = (int) getDolGlobalString('SMS123_RDV_HEURES');
+print '<tr class="oddeven"><td>D&eacute;lai avant le rendez-vous</td><td>'
+	.'<input type="number" name="rdv_heures" min="1" max="168" value="'.($heures > 0 ? $heures : 24).'" style="width:80px;"> heures'
+	.' <span class="opacitymedium">(24 = la veille &agrave; la m&ecirc;me heure)</span></td></tr>';
+$tplrdv = getDolGlobalString('SMS123_RDV_TPL');
+print '<tr class="oddeven"><td>Message</td><td>'
+	.'<input type="text" name="rdv_tpl" class="quatrevingtpercent" value="'
+	.dol_escape_htmltag($tplrdv !== '' ? $tplrdv : 'Rappel : rendez-vous le {date} a {heure}. {masociete}').'">'
+	.'<br><span class="opacitymedium">Variables : <code>{date}</code> <code>{heure}</code> <code>{label}</code> <code>{societe}</code> <code>{masociete}</code></span></td></tr>';
+
+print '<tr class="liste_titre"><td colspan="2">4. Relances de factures impay&eacute;es (t&acirc;che planifi&eacute;e quotidienne)</td></tr>';
+print '<tr class="oddeven"><td>Activer les relances</td><td>'
+	.'<input type="checkbox" name="relance_actif" value="1"'.(getDolGlobalString('SMS123_RELANCE_ACTIF') ? ' checked' : '').'></td></tr>';
+$jours = (int) getDolGlobalString('SMS123_RELANCE_JOURS');
+print '<tr class="oddeven"><td>Relancer &agrave; partir de</td><td>'
+	.'<input type="number" name="relance_jours" min="0" max="365" value="'.$jours.'" style="width:80px;"> jours apr&egrave;s l\'&eacute;ch&eacute;ance</td></tr>';
+$repeter = (int) getDolGlobalString('SMS123_RELANCE_REPETER');
+print '<tr class="oddeven"><td>Ne pas relancer plus d\'une fois tous les</td><td>'
+	.'<input type="number" name="relance_repeter" min="1" max="365" value="'.($repeter > 0 ? $repeter : 15).'" style="width:80px;"> jours</td></tr>';
+$tplrel = getDolGlobalString('SMS123_RELANCE_TPL');
+print '<tr class="oddeven"><td>Message</td><td>'
+	.'<input type="text" name="relance_tpl" class="quatrevingtpercent" value="'
+	.dol_escape_htmltag($tplrel !== '' ? $tplrel : '{masociete} : votre facture {ref} de {total} EUR est arrivee a echeance. Merci de regulariser.').'">'
+	.'<br><span class="opacitymedium">Variables : <code>{ref}</code> <code>{total}</code> <code>{date}</code> <code>{societe}</code> <code>{masociete}</code></span></td></tr>';
+print '</table>';
+print '<div class="opacitymedium" style="margin:8px 0;"><b>Important</b> : ces deux fonctions reposent sur les t&acirc;ches planifi&eacute;es de Dolibarr. '
+	.'Apr&egrave;s activation ici, allez dans <b>Accueil &rsaquo; Configuration &rsaquo; T&acirc;ches planifi&eacute;es</b> et activez les deux lignes '
+	.'&laquo;&nbsp;123-SMS&nbsp;&raquo; (le cron de Dolibarr doit lui-m&ecirc;me &ecirc;tre en service c&ocirc;t&eacute; serveur).</div>';
+print '<div class="center"><input type="submit" class="button" value="Enregistrer les rappels et relances"></div>';
+print '</form>';
+
+print '<br><br><span class="opacitymedium"><b>Quatre fa&ccedil;ons d\'envoyer des SMS depuis Dolibarr</b>&nbsp;: '
 	.'1) &agrave; la main, menu <b>Outils &rsaquo; SMS 123-SMS</b> (avec historique et solde)&nbsp;; '
 	.'2) <b>automatiquement</b> via les d&eacute;clencheurs ci-dessus&nbsp;; '
-	.'3) <b>sur mesure</b> dans vos scripts&nbsp;: <code>Sms123Api::envoyer($numero, $message)</code>.</span>';
+	.'3) depuis le <b>bouton &laquo;&nbsp;Envoyer un SMS&nbsp;&raquo;</b> des fiches client, devis, commande, facture et exp&eacute;dition&nbsp;; 4) <b>sur mesure</b> dans vos scripts&nbsp;: <code>Sms123Api::envoyer($numero, $message)</code>.</span>';
 
 llxFooter();
 $db->close();

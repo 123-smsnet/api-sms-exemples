@@ -15,8 +15,8 @@ Contenu
 - Permission dediee « Envoyer des SMS via 123-SMS » ;
 - Proxy de l'instance respecte (client HTTP natif Dolibarr).
 
-Trois facons d'envoyer des SMS depuis Dolibarr
----------------------------------------------
+Quatre facons d'envoyer des SMS depuis Dolibarr
+----------------------------------------------
 1. A LA MAIN : menu Outils > SMS 123-SMS. La page affiche le solde du
    compte, envoie a un ou plusieurs destinataires, et conserve
    l'historique des envois (le formulaire se vide apres chaque envoi).
@@ -26,9 +26,44 @@ Trois facons d'envoyer des SMS depuis Dolibarr
    valide), choisissez le destinataire (le client ou votre numero
    interne) et le message. Variables : {ref} {societe} {total} {date}
    {masociete}.
-3. SUR MESURE : une ligne dans vos scripts, triggers ou crons :
+3. DEPUIS LES FICHES : un bouton « Envoyer un SMS » apparait sur les
+   fiches tiers, contact, devis, commande, facture et expedition. Le
+   numero et un message contextuel sont pre-remplis.
+4. SUR MESURE : une ligne dans vos scripts, triggers ou crons :
       dol_include_once('/sms123/class/sms123api.class.php');
       $code = Sms123Api::envoyer('0601020304', 'Bonjour !');
+
+Rappels de rendez-vous et relances de factures (automatiques)
+-------------------------------------------------------------
+Le module fournit deux taches planifiees, desactivees par defaut :
+
+- RAPPELS DE RENDEZ-VOUS : SMS envoye X heures avant les evenements de
+  l agenda dont le TYPE est coche dans la configuration (par exemple
+  « Rendez-vous » uniquement). Le numero est pris sur le contact de
+  l evenement, a defaut sur le tiers. Anti-doublon : un seul rappel par
+  evenement. Variables : {date} {heure} {label} {societe} {masociete}.
+
+- RELANCES DE FACTURES IMPAYEES : SMS aux clients dont la facture
+  validee et non payee est echue depuis X jours, avec un intervalle
+  minimum entre deux relances de la meme facture.
+  Variables : {ref} {total} {date} {societe} {masociete}.
+
+Mise en service :
+1. Configuration du module : activez la fonction, choisissez les types
+   d evenements / les delais, adaptez les messages ;
+2. Accueil > Configuration > Taches planifiees : activez les deux
+   lignes « 123-SMS » (elles sont creees a l installation du module) ;
+3. Le cron de Dolibarr doit lui-meme etre en service cote serveur
+   (ligne crontab appelant scripts/cron/cron_run_jobs.php).
+
+Chaque envoi automatique est trace dans l historique avec son origine
+(rappel-rdv#123, relance-facture#456).
+
+Compteur de caracteres
+----------------------
+Le formulaire d envoi affiche en direct le nombre de caracteres et le
+nombre de SMS correspondant, et signale les caracteres speciaux qui
+font passer la limite de 160 a 70 caracteres.
 
 Installation
 ------------

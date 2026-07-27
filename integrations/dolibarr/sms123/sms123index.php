@@ -12,6 +12,12 @@ if (!$user->hasRight('sms123', 'envoyer')) {
 }
 
 $action = GETPOST('action', 'aZ09');
+$prenumero = GETPOST('numero', 'alphanohtml');
+$premessage = GETPOST('message', 'restricthtml');
+if ($action == 'send') {
+	$prenumero = '';
+	$premessage = '';
+}
 
 // Envoi puis redirection : le formulaire repart vide (schema POST/Redirect/GET)
 if ($action == 'send') {
@@ -56,10 +62,10 @@ print '<input type="hidden" name="action" value="send">';
 print '<table class="noborder centpercent">';
 print '<tr class="liste_titre"><td colspan="2">Nouveau message</td></tr>';
 print '<tr class="oddeven"><td class="titlefield">Destinataire(s)</td><td>'
-	.'<input type="text" name="numero" size="40" value="" placeholder="0601020304 (plusieurs : separes par -)" autofocus></td></tr>';
+	.'<input type="text" id="sms123numero" name="numero" size="40" value="'.dol_escape_htmltag($prenumero).'" placeholder="0601020304 (plusieurs : separes par -)"'.(empty($prenumero) ? ' autofocus' : '').'></td></tr>';
 print '<tr class="oddeven"><td>Message</td><td>'
-	.'<textarea name="message" rows="4" cols="60" maxlength="480"></textarea>'
-	.'<br><span class="opacitymedium">160 caract&egrave;res GSM par SMS (message long : facturation par segment).</span></td></tr>';
+	.'<textarea id="sms123message" name="message" rows="4" cols="60" maxlength="480">'.dol_escape_htmltag($premessage).'</textarea>'
+	.'<br><span id="sms123compteur" class="opacitymedium">160 caract&egrave;res GSM par SMS (message long : facturation par segment).</span></td></tr>';
 print '</table><br>';
 print '<div class="center"><input type="submit" class="button" value="Envoyer le SMS"></div>';
 print '</form>';
@@ -98,6 +104,31 @@ print '</table>';
 print '<br><div class="opacitymedium">Astuce d&eacute;veloppeur : la classe <b>Sms123Api</b> est r&eacute;utilisable partout&nbsp;: '
 	.'<code>dol_include_once(\'/sms123/class/sms123api.class.php\'); Sms123Api::envoyer($numero, $message);</code><br>'
 	.'Pour des envois automatiques sans code, activez les <b>d&eacute;clencheurs</b> dans la configuration du module.</div>';
+
+
+// Compteur de caracteres : nombre de SMS et alerte Unicode
+print '<script>
+(function() {
+	var zone = document.getElementById("sms123message");
+	var info = document.getElementById("sms123compteur");
+	if (!zone || !info) { return; }
+	function compter() {
+		var texte = zone.value;
+		var n = texte.length;
+		var unicode = /[^A-Za-z0-9 @£$¥èéùìòÇØøÅåÆæßÉ!\"#%&\'()*+,\-.\/:;<=>?_¡¿§ÄÖÑÜäöñüà\r\n]/.test(texte);
+		var parSms = unicode ? 70 : 160;
+		var parSegment = unicode ? 67 : 153;
+		var sms = n <= parSms ? 1 : Math.ceil(n / parSegment);
+		if (n === 0) { sms = 0; }
+		var texteInfo = n + " caractere" + (n > 1 ? "s" : "") + " — " + sms + " SMS";
+		if (unicode) { texteInfo += " (caracteres speciaux : 70 caracteres par SMS)"; }
+		info.textContent = texteInfo;
+		info.style.color = sms > 1 ? "#8a5a0f" : "";
+	}
+	zone.addEventListener("input", compter);
+	compter();
+})();
+</script>';
 
 llxFooter();
 $db->close();

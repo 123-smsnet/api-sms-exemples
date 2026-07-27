@@ -22,11 +22,46 @@ class modSms123 extends DolibarrModules
 			.'sans abonnement. Page d\'envoi + classe reutilisable dans vos triggers.';
 		$this->editor_name = '123-SMS.net';
 		$this->editor_url = 'https://www.123-sms.net';
-		$this->version = '2.0.0';
+		$this->version = '2.1.0';
 		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
 		$this->picto = 'phone';
 		$this->config_page_url = array('setup.php@sms123');
-		$this->module_parts = array('triggers' => 1);
+		$this->module_parts = array(
+			'triggers' => 1,
+			'hooks' => array('thirdpartycard', 'contactcard', 'propalcard', 'ordercard', 'invoicecard', 'expeditioncard'),
+		);
+
+		// Taches planifiees (a activer dans Accueil > Configuration > Taches planifiees)
+		$this->cronjobs = array(
+			0 => array(
+				'label' => 'Rappels de rendez-vous par SMS',
+				'jobtype' => 'method',
+				'class' => '/sms123/class/sms123cron.class.php',
+				'objectname' => 'Sms123Cron',
+				'method' => 'rappelsRendezVous',
+				'parameters' => '',
+				'comment' => 'Envoie un SMS avant les evenements d agenda des types choisis dans la configuration du module 123-SMS.',
+				'frequency' => 1,
+				'unitfrequency' => 3600,
+				'status' => 0,
+				'test' => 'isModEnabled("sms123")',
+				'priority' => 50,
+			),
+			1 => array(
+				'label' => 'Relances de factures impayees par SMS',
+				'jobtype' => 'method',
+				'class' => '/sms123/class/sms123cron.class.php',
+				'objectname' => 'Sms123Cron',
+				'method' => 'relancesFactures',
+				'parameters' => '',
+				'comment' => 'Envoie un SMS de relance aux clients dont la facture est echue, selon les reglages du module 123-SMS.',
+				'frequency' => 1,
+				'unitfrequency' => 86400,
+				'status' => 0,
+				'test' => 'isModEnabled("sms123")',
+				'priority' => 51,
+			),
+		);
 		$this->depends = array();
 		$this->langfiles = array('sms123@sms123');
 		$this->phpmin = array(7, 0);
