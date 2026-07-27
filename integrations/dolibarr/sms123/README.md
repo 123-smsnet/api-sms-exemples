@@ -74,14 +74,23 @@ Le module n'apparait pas dans la liste ?
 La roue crantee (configuration) renvoie une erreur 404 ?
 -------------------------------------------------------
 L'URL affichee est /sms123/admin/setup.php au lieu de
-/custom/sms123/admin/setup.php : Dolibarr n'a pas trouve le fichier
-sur le disque au moment de construire le lien.
-1. Verifiez que custom/sms123/admin/setup.php existe et est lisible ;
-2. Si le fichier est arrive apres un premier transfert incomplet, PHP
-   garde en cache l'ancien resultat : rechargez la page apres deux
-   minutes, purgez le cache Dolibarr (Configuration > Divers) ou
-   rechargez PHP-FPM ;
-3. En attendant, la page de configuration reste accessible en direct :
+/custom/sms123/admin/setup.php. Cause habituelle : dans conf.php, la
+racine URL des modules externes est vide alors que la racine fichiers
+est correcte. Dolibarr trouve donc le module (il s'active) mais ne
+sait pas construire son URL.
+
+1. Dans htdocs/conf/conf.php, verifiez que ces DEUX lignes sont
+   presentes ET coherentes :
+      $dolibarr_main_url_root_alt = '/custom';
+      $dolibarr_main_document_root_alt = '/chemin/vers/htdocs/custom';
+2. Verifiez qu'aucune de ces variables n'est REDEFINIE plus bas dans
+   le fichier (les installations automatisees ajoutent parfois un
+   second bloc qui ecrase le premier, avec une valeur vide) :
+      grep -n "url_root" htdocs/conf/conf.php
+   Ne gardez qu'une seule definition de chaque.
+3. Rechargez la page des modules.
+
+En attendant, la page de configuration reste accessible en direct :
    https://votre-dolibarr/custom/sms123/admin/setup.php
 
 Conseil de transfert : dezippez l'archive sur votre poste PUIS envoyez
