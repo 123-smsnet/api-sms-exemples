@@ -50,6 +50,23 @@ function sms123_repondre_ok($trace = '')
 	exit;
 }
 
+// Certaines passerelles construisent l'appel avec « ? » meme lorsque l'URL
+// declaree contient deja des parametres : la valeur recue est alors du type
+// « cle=abc?erreur=0 ». On redecoupe pour retrouver les parametres colles.
+foreach ($_GET as $nom => $valeur) {
+	if (is_string($valeur) && strpos($valeur, '?') !== false) {
+		list($propre, $reste) = explode('?', $valeur, 2);
+		$_GET[$nom] = $propre;
+		$colles = array();
+		parse_str($reste, $colles);
+		foreach ($colles as $k => $v) {
+			if (!isset($_GET[$k])) {
+				$_GET[$k] = $v;
+			}
+		}
+	}
+}
+
 $refenvoi = GETPOST('refenvoi', 'alphanohtml');
 $gsm = GETPOST('gsm', 'alphanohtml');
 $erreur = GETPOST('erreur', 'alphanohtml');

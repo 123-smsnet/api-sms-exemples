@@ -140,6 +140,7 @@ Sms123ArTestButton=Check the return URL
 Sms123ArTestHint=The server calls the URL above by itself: it must answer OK, otherwise 123-SMS will refuse to register it.
 Sms123ArTestOk=The URL answers OK: you can send it to 123-SMS.
 Sms123ArTestKo=The URL does not answer OK: 123-SMS will refuse it. Answer received: HTTP %s, body "%s".
+Sms123ArTestAuth=The web server protects this address with a password (HTTP %s): PHP is never executed, and 123-SMS will get the same answer. Grant access to the sms123ar.php file alone in your server configuration (.htaccess example in the module README).
 Sms123ArTestUnreachable=The URL cannot be reached from the server (%s). Check that it opens in your browser and that the Dolibarr URL root is correct.
 Sms123AgendaActive=Log SMS in the customer's agenda
 Sms123AgendaHint=every SMS linked to a third party creates an event on its record.

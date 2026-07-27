@@ -421,6 +421,8 @@ if ($onglet == 'avance') {
 		print '<br>';
 		if ($test['ok']) {
 			print '<div class="ok" style="color:#268614;"><b>'.$langs->transnoentities('Sms123ArTestOk').'</b></div>';
+		} elseif (in_array($test['http_code'], array(401, 403), true)) {
+			print '<div class="error">'.$langs->transnoentities('Sms123ArTestAuth', $test['http_code']).'</div>';
 		} elseif ($test['http_code'] == 0) {
 			print '<div class="error">'.$langs->transnoentities('Sms123ArTestUnreachable',
 				dol_escape_htmltag($test['erreur'] ? $test['erreur'] : 'HTTP 0')).'</div>';

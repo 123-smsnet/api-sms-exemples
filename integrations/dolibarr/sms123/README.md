@@ -117,6 +117,31 @@ envoi. Une cle de securite facultative peut etre ajoutee : les appels
 qui ne la portent pas sont ignores (ils recoivent quand meme « OK »,
 sans quoi l URL ne serait pas declarable).
 
+REPONSE HTTP 401 OU 403 AU TEST ?
+Votre serveur web protege le dossier par un mot de passe (.htaccess,
+authentification HTTP Basic) : PHP n est jamais execute, et 123-SMS
+recevra la meme reponse. Il faut autoriser l acces au SEUL fichier
+sms123ar.php.
+
+Apache : dans htdocs/custom/sms123/.htaccess (ou dans le VirtualHost)
+    <Files "sms123ar.php">
+        Require all granted
+        # ligne utile seulement si mod_access_compat est charge :
+        Satisfy Any
+    </Files>
+
+Nginx : dans le bloc server
+    location = /custom/sms123/sms123ar.php {
+        auth_basic off;
+        include fastcgi_params;
+        fastcgi_pass unix:/run/php/php-fpm.sock;   # adaptez
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    }
+
+Rejouez ensuite « Verifier l URL de retour » : la reponse doit etre OK.
+Ce fichier ne renvoie que le mot OK et ne lit aucune donnee : l ouvrir
+n expose rien d autre.
+
 Trace dans l agenda du client
 -----------------------------
 Option « Tracer les SMS dans l agenda du client » : chaque SMS lie a un

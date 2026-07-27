@@ -143,6 +143,7 @@ Sms123ArTestButton=Vérifier l'URL de retour
 Sms123ArTestHint=Le serveur appelle lui-même l'URL ci-dessus : elle doit répondre OK, sinon 123-SMS refusera de la déclarer.
 Sms123ArTestOk=L'URL répond bien OK : vous pouvez la communiquer à 123-SMS.
 Sms123ArTestKo=L'URL ne répond pas OK : 123-SMS la refusera. Réponse obtenue : HTTP %s, corps « %s ».
+Sms123ArTestAuth=Le serveur web protège cette adresse par un mot de passe (HTTP %s) : PHP n'est jamais exécuté, et 123-SMS recevra la même réponse. Autorisez l'accès au seul fichier sms123ar.php dans la configuration du serveur (exemple .htaccess dans le fichier README du module).
 Sms123ArTestUnreachable=L'URL n'est pas joignable depuis le serveur (%s). Vérifiez qu'elle s'ouvre dans votre navigateur et que la racine URL de Dolibarr est correcte.
 Sms123AgendaActive=Tracer les SMS dans l'agenda du client
 Sms123AgendaHint=chaque SMS lié à un tiers crée un événement sur sa fiche.

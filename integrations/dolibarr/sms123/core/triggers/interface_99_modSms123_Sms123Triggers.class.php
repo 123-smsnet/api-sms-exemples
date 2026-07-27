@@ -13,7 +13,7 @@ class InterfaceSms123Triggers extends DolibarrTriggers
 		$this->name = preg_replace('/^Interface/i', '', get_class($this));
 		$this->family = 'demo';
 		$this->description = 'Envoi de SMS via 123-SMS.net sur les evenements Dolibarr';
-		$this->version = '2.2.4';
+		$this->version = '2.2.5';
 		$this->picto = 'phone';
 	}
 
