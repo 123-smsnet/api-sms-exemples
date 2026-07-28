@@ -112,6 +112,46 @@ function sms123_fin_onglets()
 	return function_exists('dol_get_fiche_end') ? dol_get_fiche_end() : '';
 }
 
+/**
+ * Tableau des prochains evenements de l'agenda, avec la raison pour laquelle
+ * ils ne sont pas (encore) retenus. Rend un « aucun evenement » explicite.
+ *
+ * @param array     $selection resultat de Sms123Cron::candidatsRappels()
+ * @param Translate $langs     traductions
+ * @return string
+ */
+function sms123_prochains($selection, $langs)
+{
+	if (empty($selection['prochains'])) {
+		return '<div class="opacitymedium">'.$langs->transnoentities('Sms123RdvNextNone').'</div>';
+	}
+
+	$oui = $langs->transnoentities('Sms123CronStateYes');
+	$non = $langs->transnoentities('Sms123CronStateNo');
+
+	$html = '<br><b>'.$langs->transnoentities('Sms123RdvNextTitle').'</b>';
+	$html .= '<table class="noborder centpercent">';
+	$html .= '<tr class="liste_titre"><td>'.$langs->transnoentities('Sms123Date').'</td>'
+		.'<td>'.$langs->transnoentities('Sms123RdvEvent').'</td>'
+		.'<td>'.$langs->transnoentities('Sms123RdvNextIn').'</td>'
+		.'<td>'.$langs->transnoentities('Sms123RdvNextInWindow').'</td>'
+		.'<td>'.$langs->transnoentities('Sms123RdvNextTypeOk').'</td></tr>';
+
+	foreach ($selection['prochains'] as $proche) {
+		$html .= '<tr class="oddeven">';
+		$html .= '<td class="nowraponall">'.dol_print_date($proche['datep'], 'dayhour').'</td>';
+		$html .= '<td>'.dol_escape_htmltag($proche['label']).'</td>';
+		$html .= '<td class="nowraponall">'.dol_escape_htmltag($proche['delai']).'</td>';
+		$html .= '<td style="color:'.($proche['dans_fenetre'] ? '#268614' : '#c83232').'">'
+			.($proche['dans_fenetre'] ? $oui : $non).'</td>';
+		$html .= '<td style="color:'.($proche['type_ok'] ? '#268614' : '#c83232').'">'
+			.($proche['type_ok'] ? $oui : $non).'</td>';
+		$html .= '</tr>';
+	}
+
+	return $html.'</table>';
+}
+
 llxHeader('', $langs->transnoentities('Sms123SetupTitle'));
 print load_fiche_titre($langs->transnoentities('Sms123SetupTitle'), '', 'setup');
 
@@ -417,6 +457,7 @@ if ($onglet == 'rappels') {
 		} elseif (!count($selection['lignes'])) {
 			print '<div class="opacitymedium">'
 				.$langs->transnoentities('Sms123RdvTestNone', $selection['heures']).'</div>';
+			print sms123_prochains($selection, $langs);
 		} else {
 			$etats = array(
 				'a-envoyer' => array('Sms123RdvStateToSend', '#268614'),

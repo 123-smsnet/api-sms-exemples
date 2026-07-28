@@ -66,6 +66,25 @@ class Sms123Cron
 			.', fenetre de '.$selection['heures'].' h, '
 			.count($selection['lignes']).' evenement(s) trouve(s)');
 
+		// Aucun candidat : on dit ce qui vient ensuite, sinon le zero reste muet
+		if (!count($selection['lignes'])) {
+			if (!count($selection['prochains'])) {
+				$this->tracer('aucun evenement d agenda dans les 7 prochains jours');
+			}
+			foreach ($selection['prochains'] as $proche) {
+				$raisons = array();
+				if (!$proche['dans_fenetre']) {
+					$raisons[] = 'hors fenetre de '.$selection['heures'].' h';
+				}
+				if (!$proche['type_ok']) {
+					$raisons[] = 'type non retenu';
+				}
+				$this->tracer('a venir : evenement '.$proche['id'].' le '
+					.dol_print_date($proche['datep'], 'dayhour').' (dans '.$proche['delai'].')'
+					.(count($raisons) ? ' -> ecarte : '.implode(', ', $raisons) : ''));
+			}
+		}
+
 		if (!count($selection['types']) && empty($selection['tous']) && !count($selection['lignes'])) {
 			$this->output = Sms123Api::t('Sms123CronRdvNoType');
 			$this->tracer($this->output, LOG_WARNING);
@@ -227,7 +246,72 @@ class Sms123Cron
 		}
 		$db->free($resql);
 
+		// Pour le diagnostic : ce qui vient juste apres, afin qu'un « aucun
+		// evenement » s'explique de lui-meme (hors fenetre, type non retenu...)
+		$resultat['prochains'] = self::prochainsEvenements($db, $resultat);
+
 		return $resultat;
+	}
+
+	/**
+	 * Prochains evenements de l'agenda, tous types confondus, avec la raison
+	 * pour laquelle ils sont retenus ou non. Sert uniquement au diagnostic.
+	 *
+	 * @param DoliDB $db        base
+	 * @param array  $selection resultat partiel de candidatsRappels()
+	 * @param int    $limite    nombre de lignes
+	 * @param int    $jours     horizon d'observation
+	 * @return array            id, datep, label, delai, dans_fenetre, type_ok
+	 */
+	public static function prochainsEvenements($db, $selection, $limite = 5, $jours = 7)
+	{
+		$maintenant = dol_now();
+		$liste = array();
+
+		$sql = 'SELECT a.id, a.datep, a.label, a.fk_action';
+		$sql .= ' FROM '.MAIN_DB_PREFIX.'actioncomm as a';
+		$sql .= ' WHERE a.entity IN ('.getEntity('agenda').')';
+		$sql .= " AND a.datep >= '".$db->idate($maintenant)."'";
+		$sql .= " AND a.datep <= '".$db->idate($maintenant + ($jours * 86400))."'";
+		$sql .= ' ORDER BY a.datep';
+		$sql .= $db->plimit($limite, 0);
+
+		$resql = $db->query($sql);
+		if (!$resql) {
+			return $liste;
+		}
+
+		$fin = $maintenant + ($selection['heures'] * 3600);
+		while ($obj = $db->fetch_object($resql)) {
+			$date = $db->jdate($obj->datep);
+			$liste[] = array(
+				'id' => (int) $obj->id,
+				'datep' => $date,
+				'label' => empty($obj->label) ? '' : $obj->label,
+				'delai' => self::delaiTexte($date - $maintenant),
+				'dans_fenetre' => ($date <= $fin),
+				'type_ok' => (!empty($selection['tous']) || self::typeConcerne($db, $obj->fk_action)),
+			);
+		}
+		$db->free($resql);
+
+		return $liste;
+	}
+
+	/** Duree lisible : « 24 h 02 min », « 3 j 05 h 10 min ». */
+	public static function delaiTexte($secondes)
+	{
+		$secondes = max(0, (int) $secondes);
+		$heures = (int) floor($secondes / 3600);
+		$minutes = (int) floor(($secondes % 3600) / 60);
+
+		if ($heures >= 24) {
+			$jours = (int) floor($heures / 24);
+
+			return $jours.' j '.sprintf('%02d', $heures % 24).' h '.sprintf('%02d', $minutes).' min';
+		}
+
+		return $heures.' h '.sprintf('%02d', $minutes).' min';
 	}
 
 	/* --------------------- choix « Rappel SMS » propre a une fiche */
