@@ -18,6 +18,8 @@ class ActionsSms123
 	const LISTES = 'thirdpartylist,contactlist';
 	/** Contexte de la fiche d'un evenement d'agenda. */
 	const FICHE_EVENEMENT = 'actioncard';
+	/** Contexte present sur toutes les pages de Dolibarr. */
+	const TOUTES_PAGES = 'main';
 
 	public function __construct($db)
 	{
@@ -196,6 +198,39 @@ class ActionsSms123
 
 		header('Location: '.dol_buildpath('/sms123/sms123masse.php', 1));
 		exit;
+	}
+
+	/**
+	 * Declencheur de secours, appele en pied de chaque page de Dolibarr.
+	 *
+	 * N'agit que si l'option est cochee, si l'intervalle est ecoule et si le
+	 * cron de Dolibarr ne tourne pas deja. N'affiche rien : une page ne doit
+	 * jamais se voir modifiee par ce mecanisme.
+	 *
+	 * @param array  $parameters  contexte du hook
+	 * @param object $object      objet courant
+	 * @param string $action      action en cours
+	 * @param object $hookmanager gestionnaire de hooks
+	 * @return int
+	 */
+	public function printCommonFooter($parameters, &$object, &$action, $hookmanager)
+	{
+		global $user;
+
+		if (!isModEnabled('sms123') || !getDolGlobalString('SMS123_CRON_SECOURS')) {
+			return 0;
+		}
+		// Pages publiques ou visiteur non identifie : on ne lance rien
+		if (!is_object($user) || empty($user->id)) {
+			return 0;
+		}
+
+		dol_include_once('/sms123/class/sms123cron.class.php');
+		if (class_exists('Sms123Cron')) {
+			Sms123Cron::declencheurDeSecours($this->db);
+		}
+
+		return 0;
 	}
 
 	/* ------------------------------------------------ utilitaires */

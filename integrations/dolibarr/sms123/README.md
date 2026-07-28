@@ -104,6 +104,32 @@ non autorisee, 97 Sender-ID non declare, 101 numero blackliste (STOP).
 Le code ERR est propre au module : la requete n a pas atteint la
 passerelle (reseau, pare-feu, proxy) ; la raison est affichee a cote.
 
+FAIRE TOURNER LES TACHES AUTOMATIQUEMENT
+----------------------------------------
+Dolibarr n execute ses taches planifiees que si quelque chose vient les
+declencher. Un module ne peut pas installer une ligne de crontab lui-meme
+(le serveur web n en a ni le droit ni l acces) : l onglet « Rappels et
+relances » vous donne donc les trois moyens possibles, la commande et
+l URL etant pre-remplies avec vos propres chemins et cle.
+
+1. CRON DU SERVEUR (recommande) - une ligne dans la crontab, du type :
+      */5 * * * * php /chemin/dolibarr/scripts/cron/cron_run_jobs.php <cle> <login>
+   La cle est celle du module Taches planifiees de Dolibarr.
+
+2. APPEL D UNE URL par un service externe (planificateur de votre
+   hebergeur, service de cron en ligne) :
+      https://votre-dolibarr/public/cron/cron_run_jobs_by_url.php?securitykey=<cle>&userlogin=<login>
+
+3. DECLENCHEUR DE SECOURS integre au module, a n activer que si aucun
+   cron n est possible. Le module lance alors ses propres taches pendant
+   l affichage d une page de Dolibarr, au plus une fois par intervalle
+   (15 minutes par defaut). Ses limites, assumees : rien ne part tant
+   que personne ne se connecte, et la page qui declenche l envoi met un
+   peu plus de temps a s afficher. Il s efface de lui-meme des qu un
+   vrai cron tourne (il verifie la date de derniere execution des taches
+   avant d agir), et un verrou empeche deux visiteurs simultanes de
+   lancer le meme envoi.
+
 RIEN NE PART : COMMENT VOIR CE QUI SE PASSE
 -------------------------------------------
 L onglet « Rappels et relances » de la configuration donne trois

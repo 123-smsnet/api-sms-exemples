@@ -64,6 +64,12 @@ if ($action == 'savetrig') {
 	setEventMessages($langs->transnoentities('Sms123TrigSaved'), null, 'mesgs');
 }
 
+if ($action == 'savesecours') {
+	dolibarr_set_const($db, 'SMS123_CRON_SECOURS', GETPOST('cron_secours', 'int') ? 1 : 0, 'chaine', 0, '', $conf->entity);
+	dolibarr_set_const($db, 'SMS123_CRON_SECOURS_MIN', (int) GETPOST('cron_secours_min', 'int'), 'chaine', 0, '', $conf->entity);
+	setEventMessages($langs->transnoentities('Sms123CronSecoursSaved'), null, 'mesgs');
+}
+
 if ($action == 'saveavance') {
 	dolibarr_set_const($db, 'SMS123_AR_ACTIF', GETPOST('ar_actif', 'int') ? 1 : 0, 'chaine', 0, '', $conf->entity);
 	dolibarr_set_const($db, 'SMS123_AR_CLE', GETPOST('ar_cle', 'alphanohtml'), 'chaine', 0, '', $conf->entity);
@@ -397,6 +403,54 @@ if ($onglet == 'rappels') {
 	if ($resqlc) {
 		$db->free($resqlc);
 	}
+
+	// --------------------------------------------- faire tourner les taches
+	print '<br>';
+	print load_fiche_titre($langs->transnoentities('Sms123CronHelpTitle'), '', 'generic');
+	print '<div class="opacitymedium" style="margin-bottom:10px;">'
+		.$langs->transnoentities('Sms123CronHelpIntro').'</div>';
+
+	$clecron = getDolGlobalString('CRON_KEY');
+	$racineweb = empty($dolibarr_main_url_root) ? DOL_MAIN_URL_ROOT : $dolibarr_main_url_root;
+	$commande = '*/5 * * * * php '.dirname(DOL_DOCUMENT_ROOT).'/scripts/cron/cron_run_jobs.php '
+		.($clecron ? $clecron : '<cle>').' '.$user->login;
+	$urlcron = rtrim($racineweb, '/').'/public/cron/cron_run_jobs_by_url.php'
+		.'?securitykey='.urlencode($clecron).'&userlogin='.urlencode($user->login);
+
+	print '<table class="noborder centpercent">';
+	print '<tr class="oddeven"><td class="titlefield">'.$langs->transnoentities('Sms123CronHelpCli').'</td><td>'
+		.'<input type="text" class="quatrevingtpercent" readonly value="'.dol_escape_htmltag($commande).'"></td></tr>';
+	print '<tr class="oddeven"><td>'.$langs->transnoentities('Sms123CronHelpUrl').'</td><td>';
+	if ($clecron) {
+		print '<input type="text" class="quatrevingtpercent" readonly value="'.dol_escape_htmltag($urlcron).'">';
+	} else {
+		print '<span class="opacitymedium">'.$langs->transnoentities('Sms123CronHelpNoKey').'</span>';
+	}
+	print '</td></tr>';
+	print '</table>';
+
+	// declencheur de secours
+	$secoursmin = (int) getDolGlobalString('SMS123_CRON_SECOURS_MIN');
+	$secoursts = (int) getDolGlobalString('SMS123_CRON_SECOURS_TS');
+	print '<form method="POST" action="'.$_SERVER['PHP_SELF'].'">';
+	print '<input type="hidden" name="token" value="'.newToken().'">';
+	print '<input type="hidden" name="action" value="savesecours">';
+	print sms123_champ_onglet('rappels');
+	print '<table class="noborder centpercent">';
+	print '<tr class="liste_titre"><td colspan="2">'.$langs->transnoentities('Sms123CronHelpFallback').'</td></tr>';
+	print '<tr class="oddeven"><td class="titlefield">'.$langs->transnoentities('Sms123CronFallbackActive').'</td><td>'
+		.'<input type="checkbox" name="cron_secours" value="1"'.(getDolGlobalString('SMS123_CRON_SECOURS') ? ' checked' : '').'>'
+		.' <span class="opacitymedium">'.$langs->transnoentities('Sms123CronFallbackHint').'</span></td></tr>';
+	print '<tr class="oddeven"><td>'.$langs->transnoentities('Sms123CronFallbackEvery').'</td><td>'
+		.'<input type="number" name="cron_secours_min" min="5" max="1440" value="'.($secoursmin > 0 ? $secoursmin : 15).'" style="width:80px;"> '
+		.$langs->transnoentities('Sms123CronMinutes').'</td></tr>';
+	print '<tr class="oddeven"><td>'.$langs->transnoentities('Sms123CronFallbackLast').'</td><td class="opacitymedium">'
+		.($secoursts > 0 ? dol_print_date($secoursts, 'dayhour').' &mdash; '
+			.dol_escape_htmltag(getDolGlobalString('SMS123_CRON_SECOURS_RESULTAT'))
+			: $langs->transnoentities('Sms123CronFallbackNever')).'</td></tr>';
+	print '</table>';
+	print '<div class="center"><input type="submit" class="button" value="'.dol_escape_htmltag($langs->transnoentities('Sms123Save')).'"></div>';
+	print '</form>';
 
 	// --------------------------------------------- test de la selection
 	print '<br><form method="POST" action="'.$_SERVER['PHP_SELF'].'">';

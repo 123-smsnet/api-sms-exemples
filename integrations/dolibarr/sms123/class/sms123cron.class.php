@@ -37,7 +37,7 @@ class Sms123Cron
 	 *
 	 * @return int 0 si OK
 	 */
-	public function rappelsRendezVous($test = 0)
+	public function rappelsRendezVous($test = 0, $max = 200)
 	{
 		global $db;
 
@@ -54,7 +54,7 @@ class Sms123Cron
 			return 0;
 		}
 
-		$selection = self::candidatsRappels($db);
+		$selection = self::candidatsRappels($db, $max);
 		if ($selection['erreur'] !== '') {
 			$this->error = $selection['erreur'];
 			$this->tracer('erreur de selection : '.$selection['erreur'], LOG_ERR);
@@ -312,6 +312,91 @@ class Sms123Cron
 		}
 
 		return $heures.' h '.sprintf('%02d', $minutes).' min';
+	}
+
+	/* --------------------- declencheur de secours (« cron sur visite ») */
+
+	/**
+	 * Le cron de Dolibarr tourne-t-il vraiment ? On regarde la derniere
+	 * execution des taches du module.
+	 *
+	 * @param DoliDB $db     base
+	 * @param int    $heures anciennete acceptee
+	 * @return bool
+	 */
+	public static function cronDolibarrActif($db, $heures = 3)
+	{
+		$sql = 'SELECT datelastrun FROM '.MAIN_DB_PREFIX."cronjob";
+		$sql .= " WHERE objectname = 'Sms123Cron' AND datelastrun IS NOT NULL";
+		$sql .= " AND datelastrun > '".$db->idate(dol_now() - ($heures * 3600))."'";
+		$sql .= ' LIMIT 1';
+
+		$resql = $db->query($sql);
+		if (!$resql) {
+			return false;
+		}
+		$actif = ($db->num_rows($resql) > 0);
+		$db->free($resql);
+
+		return $actif;
+	}
+
+	/**
+	 * Declencheur de secours : lance les taches du module pendant l'affichage
+	 * d'une page, lorsqu'aucun cron n'est en service.
+	 *
+	 * C'est un depannage, pas un remplacement : rien ne part tant que personne
+	 * n'ouvre Dolibarr. Le verrou (date posee AVANT le travail) evite que deux
+	 * visiteurs simultanes lancent la meme chose.
+	 *
+	 * @param DoliDB $db base
+	 * @return int 1 si une execution a eu lieu
+	 */
+	public static function declencheurDeSecours($db)
+	{
+		global $conf;
+
+		if (!getDolGlobalString('SMS123_CRON_SECOURS')) {
+			return 0;
+		}
+
+		$intervalle = (int) getDolGlobalString('SMS123_CRON_SECOURS_MIN');
+		if ($intervalle <= 0) {
+			$intervalle = 15;
+		}
+
+		$maintenant = dol_now();
+		$dernier = (int) getDolGlobalString('SMS123_CRON_SECOURS_TS');
+		if ($dernier > 0 && ($maintenant - $dernier) < ($intervalle * 60)) {
+			return 0;
+		}
+
+		// Un vrai cron s'en occupe deja : on ne double pas le travail
+		if (self::cronDolibarrActif($db)) {
+			return 0;
+		}
+
+		// Verrou pose avant le travail
+		dolibarr_set_const($db, 'SMS123_CRON_SECOURS_TS', $maintenant, 'chaine', 0, '', $conf->entity);
+
+		$tache = new self();
+		$tache->rappelsRendezVous(0, 20);
+		$compte = $tache->output;
+
+		// Les taches quotidiennes ne sont lancees qu'une fois par jour
+		$jour = (int) getDolGlobalString('SMS123_CRON_SECOURS_JOUR');
+		if ($jour <= 0 || ($maintenant - $jour) > 86400) {
+			dolibarr_set_const($db, 'SMS123_CRON_SECOURS_JOUR', $maintenant, 'chaine', 0, '', $conf->entity);
+			$tache->relancesFactures();
+			$compte .= ' | '.$tache->output;
+			$tache->alerteSolde();
+			$compte .= ' | '.$tache->output;
+		}
+
+		dolibarr_set_const($db, 'SMS123_CRON_SECOURS_RESULTAT', dol_trunc($compte, 250), 'chaine', 0, '', $conf->entity);
+		dol_syslog('Sms123Cron : declencheur de secours -> '.$compte, LOG_INFO);
+
+		return 1;
 	}
 
 	/* --------------------- choix « Rappel SMS » propre a une fiche */
