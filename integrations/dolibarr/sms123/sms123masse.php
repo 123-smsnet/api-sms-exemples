@@ -162,7 +162,7 @@ if ($action == 'sendmass') {
 					'{masociete}' => $masociete,
 				));
 				$code = Sms123Api::envoyer($d['numero'], $texte, $test, 'masse', $d['socid']);
-				$ok = in_array($code, array('80', '81'), true);
+				$ok = Sms123Api::estSucces($code, $test);
 				$ok ? $envoyes++ : $echecs++;
 				$resultats[] = array($d['nom'], $d['numero'], $code, $ok);
 			}
@@ -175,7 +175,7 @@ if ($action == 'sendmass') {
 					$numeros[] = $d['numero'];
 				}
 				$code = Sms123Api::envoyer(implode('-', $numeros), $message, $test, 'masse');
-				$ok = in_array($code, array('80', '81'), true);
+				$ok = Sms123Api::estSucces($code, $test);
 				foreach ($paquet as $d) {
 					$ok ? $envoyes++ : $echecs++;
 					$resultats[] = array($d['nom'], $d['numero'], $code, $ok);

@@ -116,7 +116,7 @@ class Sms123Cron
 			$code = Sms123Api::envoyer($ligne['numero'], $message, $test,
 				'rappel-rdv#'.$ligne['id'], (int) $ligne['objet']->fk_soc);
 
-			if (in_array($code, array('80', '81'), true)) {
+			if (Sms123Api::estSucces($code, $test)) {
 				$envoyes++;
 				$this->tracer($prefixe.' : reponse '.$code.' - '.Sms123Api::libelle($code));
 			} else {
@@ -498,7 +498,7 @@ class Sms123Cron
 			));
 
 			$code = Sms123Api::envoyer($trouve['numero'], $message, 0, $origine, (int) $obj->fk_soc);
-			if (in_array($code, array('80', '81'), true)) {
+			if (Sms123Api::estSucces($code)) {
 				$envoyes++;
 			} else {
 				$detail .= 'Facture '.$obj->ref.' : code '.$code.'. ';

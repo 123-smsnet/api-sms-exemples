@@ -97,15 +97,15 @@ class Sms123Api
 		list($code, $reference) = self::separerCodeReference($reponse['contenu']);
 		dol_syslog('Sms123Api::envoyer origine='.$origine.' -> code '.$code
 			.' ('.$reponse['methode'].', '.$reponse['duree'].' ms)'
-			.(in_array($code, array('80', '81'), true) ? '' : ' ECHEC : '.self::libelle($code)),
-			in_array($code, array('80', '81'), true) ? LOG_INFO : LOG_WARNING);
+			.(self::estSucces($code, $test) ? '' : ' ECHEC : '.self::libelle($code)),
+			self::estSucces($code, $test) ? LOG_INFO : LOG_WARNING);
 
 		if (empty($test) && is_object($db)) {
 			self::historiser($db, $champs['numero'], $message, $code,
 				$reponse['methode'], $origine, is_object($user) ? $user->id : 0,
 				$reference, $socid);
 
-			if ($socid > 0 && in_array($code, array('80', '81'), true)) {
+			if ($socid > 0 && self::estSucces($code)) {
 				self::tracerAgenda($db, $socid, $champs['numero'], $message);
 			}
 		}
@@ -363,13 +363,34 @@ class Sms123Api
 		return implode('-', $parts);
 	}
 
+	/**
+	 * L'appel est-il un succes ?
+	 *
+	 * 80 (envoye) et 81 (differe) valent succes. En envoi a blanc, l'API
+	 * repond 92 : « test d'envoi concluant » - c'est le succes attendu, et
+	 * non une erreur.
+	 *
+	 * @param string $code code retour de l'API
+	 * @param int    $test 1 si l'appel etait un envoi a blanc
+	 * @return bool
+	 */
+	public static function estSucces($code, $test = 0)
+	{
+		if (in_array((string) $code, array('80', '81'), true)) {
+			return true;
+		}
+
+		return (!empty($test) && (string) $code === '92');
+	}
+
 	/** Libelle d'un code retour API. */
 	public static function libelle($code)
 	{
 		if ((string) $code === 'ERR') {
 			return self::t('Sms123CodeERR');
 		}
-		$connus = array('80', '81', '82', '83', '84', '91', '97');
+		$connus = array('80', '81', '82', '83', '84', '85', '86', '87', '88', '89',
+			'90', '91', '92', '93', '94', '95', '96', '97', '98', '99', '100', '101', '102');
 		if (in_array((string) $code, $connus, true)) {
 			return self::t('Sms123Code'.$code);
 		}

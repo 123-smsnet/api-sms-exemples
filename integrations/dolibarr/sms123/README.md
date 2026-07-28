@@ -86,6 +86,24 @@ Le module fournit deux taches planifiees, desactivees par defaut :
   (sera envoye / deja rappele / aucun numero). C est le premier reflexe
   si un rappel n arrive pas.
 
+CODES DE RETOUR DE L API
+------------------------
+Le module connait et traduit les 23 codes de l API 123-SMS (80 a 102) :
+ils s affichent en clair dans l historique, dans les journaux et dans
+l onglet « Aide » de la configuration.
+
+Les trois qui valent SUCCES : 80 (message envoye), 81 (enregistre pour
+un envoi differe) et 92 (test d envoi concluant). Le 92 est la reponse
+normale d un envoi A BLANC : bouton « Simuler », « Tester la
+connexion » ou case « envoi a blanc » de l envoi en masse. Il confirme
+que la requete est valide, sans rien envoyer ni debiter.
+
+Les plus utiles a connaitre : 82 identifiants invalides, 83 credit
+insuffisant, 84 numero invalide, 91 doublon sous 24 h, 96 adresse IP
+non autorisee, 97 Sender-ID non declare, 101 numero blackliste (STOP).
+Le code ERR est propre au module : la requete n a pas atteint la
+passerelle (reseau, pare-feu, proxy) ; la raison est affichee a cote.
+
 RIEN NE PART : COMMENT VOIR CE QUI SE PASSE
 -------------------------------------------
 L onglet « Rappels et relances » de la configuration donne trois

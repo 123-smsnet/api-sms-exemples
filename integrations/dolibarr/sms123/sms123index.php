@@ -30,7 +30,7 @@ if ($action == 'send') {
 		setEventMessages($langs->transnoentities('Sms123NeedRecipientAndMessage'), null, 'errors');
 	} else {
 		$code = Sms123Api::envoyer($numero, $message, 0, 'manuel', $socid);
-		$ok = in_array($code, array('80', '81'), true);
+		$ok = Sms123Api::estSucces($code);
 		setEventMessages(Sms123Api::libelle($code), null, $ok ? 'mesgs' : 'errors');
 	}
 	header('Location: '.$_SERVER['PHP_SELF']);

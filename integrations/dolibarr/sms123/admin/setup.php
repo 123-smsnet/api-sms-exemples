@@ -577,6 +577,20 @@ if ($onglet == 'aide') {
 	print '<tr class="oddeven"><td>'.$langs->transnoentities('Sms123HelpSupport').'</td><td>'
 		.'<a href="mailto:contact@123-sms.net">contact@123-sms.net</a> &nbsp;&mdash;&nbsp; 02 51 76 07 34</td></tr>';
 	print '</table>';
+
+	// Codes de retour de l'API, tels que le module les interprete
+	print '<br>';
+	print load_fiche_titre($langs->transnoentities('Sms123CodesTitle'), '', 'generic');
+	print '<table class="noborder centpercent">';
+	$succes = array('80', '81', '92');
+	foreach (array('80', '81', '82', '83', '84', '85', '86', '87', '88', '89', '90',
+		'91', '92', '93', '94', '95', '96', '97', '98', '99', '100', '101', '102') as $c) {
+		$vert = in_array($c, $succes, true);
+		print '<tr class="oddeven"><td width="70"><b style="color:'.($vert ? '#268614' : '#c83232').'">'
+			.$c.'</b></td><td>'.Sms123Api::libelle($c).'</td></tr>';
+	}
+	print '</table>';
+	print '<div class="opacitymedium" style="margin:8px 0;">'.$langs->transnoentities('Sms123CodesHint').'</div>';
 }
 
 print sms123_fin_onglets();
