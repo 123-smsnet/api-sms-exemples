@@ -73,15 +73,32 @@ class Sms123Api
 			$champs['test'] = 'o';
 		}
 
+		dol_syslog('Sms123Api::envoyer origine='.$origine.' numero='.$champs['numero']
+			.' test='.((int) $test).' socid='.((int) $socid), LOG_INFO);
+
 		$reponse = self::appel($champs);
 		if ($reponse['http_code'] != 200) {
-			dol_syslog('Sms123Api::envoyer echec HTTP '.$reponse['http_code'].' '.$reponse['erreur'], LOG_WARNING);
-			return 'ERR: appel API impossible (HTTP '.$reponse['http_code'].($reponse['erreur'] ? ' - '.$reponse['erreur'] : '').')';
+			$detail = 'appel API impossible (HTTP '.$reponse['http_code']
+				.($reponse['erreur'] ? ' - '.$reponse['erreur'] : '').')';
+			dol_syslog('Sms123Api::envoyer ECHEC origine='.$origine.' : '.$detail, LOG_ERR);
+
+			// L'echec est trace dans l'historique : une tentative qui ne part
+			// pas doit se voir, sinon il ne reste rien a regarder.
+			if (empty($test) && is_object($db)) {
+				self::historiser($db, $champs['numero'], $message, 'ERR',
+					'HTTP '.$reponse['http_code'], $origine,
+					is_object($user) ? $user->id : 0, dol_trunc($detail, 60), $socid);
+			}
+
+			return 'ERR: '.$detail;
 		}
 
 		// Avec refaccuse, l'API peut renvoyer le code suivi d'une reference d'envoi
 		list($code, $reference) = self::separerCodeReference($reponse['contenu']);
-		dol_syslog('Sms123Api::envoyer -> code '.$code.' ('.$reponse['methode'].')', LOG_INFO);
+		dol_syslog('Sms123Api::envoyer origine='.$origine.' -> code '.$code
+			.' ('.$reponse['methode'].', '.$reponse['duree'].' ms)'
+			.(in_array($code, array('80', '81'), true) ? '' : ' ECHEC : '.self::libelle($code)),
+			in_array($code, array('80', '81'), true) ? LOG_INFO : LOG_WARNING);
 
 		if (empty($test) && is_object($db)) {
 			self::historiser($db, $champs['numero'], $message, $code,
@@ -349,6 +366,9 @@ class Sms123Api
 	/** Libelle d'un code retour API. */
 	public static function libelle($code)
 	{
+		if ((string) $code === 'ERR') {
+			return self::t('Sms123CodeERR');
+		}
 		$connus = array('80', '81', '82', '83', '84', '91', '97');
 		if (in_array((string) $code, $connus, true)) {
 			return self::t('Sms123Code'.$code);

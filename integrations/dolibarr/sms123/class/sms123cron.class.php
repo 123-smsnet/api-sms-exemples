@@ -10,6 +10,22 @@ class Sms123Cron
 {
 	public $output = '';
 	public $error = '';
+	/** Journal detaille de la derniere execution (une ligne par etape). */
+	public $journal = array();
+
+	/**
+	 * Consigne une etape : dans le journal de l'objet ET dans le syslog de
+	 * Dolibarr, pour qu'une execution automatique laisse une trace lisible.
+	 *
+	 * @param string $texte  ligne de journal
+	 * @param int    $niveau niveau de log Dolibarr
+	 * @return void
+	 */
+	protected function tracer($texte, $niveau = LOG_INFO)
+	{
+		$this->journal[] = $texte;
+		dol_syslog('Sms123Cron : '.$texte, $niveau);
+	}
 
 	/**
 	 * Rappels de rendez-vous : un SMS par evenement d'agenda dont le type est
@@ -21,26 +37,38 @@ class Sms123Cron
 	 *
 	 * @return int 0 si OK
 	 */
-	public function rappelsRendezVous()
+	public function rappelsRendezVous($test = 0)
 	{
 		global $db;
 
 		$this->output = '';
 		$this->error = '';
+		$this->journal = array();
 		dol_include_once('/sms123/class/sms123api.class.php');
+
+		$this->tracer('rappels de rendez-vous : demarrage'.(empty($test) ? '' : ' EN SIMULATION'));
 
 		if (!getDolGlobalString('SMS123_RDV_ACTIF')) {
 			$this->output = Sms123Api::t('Sms123CronRdvOff');
+			$this->tracer($this->output, LOG_WARNING);
 			return 0;
 		}
 
 		$selection = self::candidatsRappels($db);
 		if ($selection['erreur'] !== '') {
 			$this->error = $selection['erreur'];
+			$this->tracer('erreur de selection : '.$selection['erreur'], LOG_ERR);
 			return -1;
 		}
+
+		$this->tracer('criteres : '.(empty($selection['tous'])
+				? count($selection['types']).' type(s) coche(s)' : 'tous les types')
+			.', fenetre de '.$selection['heures'].' h, '
+			.count($selection['lignes']).' evenement(s) trouve(s)');
+
 		if (!count($selection['types']) && empty($selection['tous']) && !count($selection['lignes'])) {
 			$this->output = Sms123Api::t('Sms123CronRdvNoType');
+			$this->tracer($this->output, LOG_WARNING);
 			return 0;
 		}
 
@@ -53,22 +81,33 @@ class Sms123Cron
 		$ignores = 0;
 		$detail = '';
 		foreach ($selection['lignes'] as $ligne) {
+			$prefixe = 'evenement '.$ligne['id'].' ('.dol_print_date($ligne['datep'], 'dayhour').')';
+
 			if ($ligne['etat'] != 'a-envoyer') {
 				$ignores++;
+				$this->tracer($prefixe.' : ignore, '
+					.($ligne['etat'] == 'deja' ? 'rappel deja envoye' : 'aucun numero trouve'));
 				continue;
 			}
 
 			$message = strtr($modele, self::variablesEvenement($db, $ligne['objet']));
-			$code = Sms123Api::envoyer($ligne['numero'], $message, 0,
+			$this->tracer($prefixe.' : envoi au '.$ligne['numero']
+				.' (champ '.$ligne['source'].') : "'.dol_trunc($message, 80).'"');
+
+			$code = Sms123Api::envoyer($ligne['numero'], $message, $test,
 				'rappel-rdv#'.$ligne['id'], (int) $ligne['objet']->fk_soc);
+
 			if (in_array($code, array('80', '81'), true)) {
 				$envoyes++;
+				$this->tracer($prefixe.' : reponse '.$code.' - '.Sms123Api::libelle($code));
 			} else {
 				$detail .= 'Evenement '.$ligne['id'].' : code '.$code.'. ';
+				$this->tracer($prefixe.' : ECHEC, reponse '.$code.' - '.Sms123Api::libelle($code), LOG_ERR);
 			}
 		}
 
 		$this->output = Sms123Api::t('Sms123CronRdvDone', $envoyes, $ignores).' '.$detail;
+		$this->tracer('fin : '.$this->output);
 
 		return 0;
 	}

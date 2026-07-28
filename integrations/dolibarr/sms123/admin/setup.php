@@ -320,6 +320,44 @@ if ($onglet == 'rappels') {
 	print '<div class="center"><input type="submit" class="button" value="'.dol_escape_htmltag($langs->transnoentities('Sms123CronSaveButton')).'"></div>';
 	print '</form>';
 
+	// --------------------------------------------- etat des taches planifiees
+	print '<br>';
+	print load_fiche_titre($langs->transnoentities('Sms123CronStateTitle'), '', 'generic');
+
+	$sqlc = 'SELECT label, methodename, status, datelastrun, datenextrun, lastresult, lastoutput';
+	$sqlc .= ' FROM '.MAIN_DB_PREFIX."cronjob WHERE objectname = 'Sms123Cron' ORDER BY priority";
+	$resqlc = $db->query($sqlc);
+
+	if ($resqlc && $db->num_rows($resqlc) > 0) {
+		print '<table class="noborder centpercent">';
+		print '<tr class="liste_titre"><td>'.$langs->transnoentities('Sms123CronStateJob').'</td>'
+			.'<td width="90">'.$langs->transnoentities('Sms123CronStateStatus').'</td>'
+			.'<td>'.$langs->transnoentities('Sms123CronStateLastRun').'</td>'
+			.'<td>'.$langs->transnoentities('Sms123CronStateNextRun').'</td>'
+			.'<td>'.$langs->transnoentities('Sms123CronStateOutput').'</td></tr>';
+		while ($objc = $db->fetch_object($resqlc)) {
+			$jamais = empty($objc->datelastrun);
+			print '<tr class="oddeven">';
+			print '<td>'.dol_escape_htmltag($objc->label).'</td>';
+			print '<td><b style="color:'.($objc->status ? '#268614' : '#c83232').'">'
+				.$langs->transnoentities($objc->status ? 'Sms123CronStateYes' : 'Sms123CronStateNo').'</b></td>';
+			print '<td'.($jamais ? ' style="color:#c83232"' : ' class="nowraponall"').'>'
+				.($jamais ? $langs->transnoentities('Sms123CronStateNever')
+					: dol_print_date($db->jdate($objc->datelastrun), 'dayhour')).'</td>';
+			print '<td class="nowraponall">'.(empty($objc->datenextrun) ? '-'
+				: dol_print_date($db->jdate($objc->datenextrun), 'dayhour')).'</td>';
+			print '<td class="opacitymedium">'.dol_escape_htmltag(dol_trunc($objc->lastoutput, 160)).'</td>';
+			print '</tr>';
+		}
+		print '</table>';
+		print '<div class="opacitymedium" style="margin:8px 0;">'.$langs->transnoentities('Sms123CronStateHint').'</div>';
+	} else {
+		print '<div class="warning">'.$langs->transnoentities('Sms123CronStateNone').'</div>';
+	}
+	if ($resqlc) {
+		$db->free($resqlc);
+	}
+
 	// --------------------------------------------- test de la selection
 	print '<br><form method="POST" action="'.$_SERVER['PHP_SELF'].'">';
 	print '<input type="hidden" name="token" value="'.newToken().'">';
@@ -329,6 +367,37 @@ if ($onglet == 'rappels') {
 		.dol_escape_htmltag($langs->transnoentities('Sms123RdvTestButton')).'">';
 	print '<br><span class="opacitymedium">'.$langs->transnoentities('Sms123RdvTestHint').'</span></div>';
 	print '</form>';
+
+	// --------------------------------------------- execution a la demande
+	print '<br><form method="POST" action="'.$_SERVER['PHP_SELF'].'">';
+	print '<input type="hidden" name="token" value="'.newToken().'">';
+	print sms123_champ_onglet('rappels');
+	print '<div class="center">';
+	print '<input type="submit" class="button button-save" name="lancersimulation" value="'
+		.dol_escape_htmltag($langs->transnoentities('Sms123RdvRunDry')).'">';
+	print ' &nbsp; <input type="submit" class="button" name="lancerreel" value="'
+		.dol_escape_htmltag($langs->transnoentities('Sms123RdvRunReal')).'">';
+	print '<br><span class="opacitymedium">'.$langs->transnoentities('Sms123RdvRunHint').'</span></div>';
+	print '</form>';
+
+	if (GETPOST('lancersimulation', 'alphanohtml') || GETPOST('lancerreel', 'alphanohtml')) {
+		$simulation = GETPOST('lancersimulation', 'alphanohtml') ? 1 : 0;
+
+		dol_include_once('/sms123/class/sms123cron.class.php');
+		$tache = new Sms123Cron();
+		$tache->rappelsRendezVous($simulation);
+
+		print '<br>';
+		print load_fiche_titre($langs->transnoentities('Sms123RdvRunTitle'), '', 'generic');
+		print '<div class="uc-journal" style="background:#20293a; color:#e6edf3; border-radius:8px; padding:14px 18px; font-family:monospace; font-size:13px; line-height:1.6; overflow-x:auto;">';
+		foreach ($tache->journal as $trace) {
+			print dol_escape_htmltag($trace).'<br>';
+		}
+		print '</div>';
+		if (!empty($tache->error)) {
+			print '<div class="error">'.dol_escape_htmltag($tache->error).'</div>';
+		}
+	}
 
 	if ($action == 'testrdv') {
 		print '<br>';

@@ -86,6 +86,36 @@ Le module fournit deux taches planifiees, desactivees par defaut :
   (sera envoye / deja rappele / aucun numero). C est le premier reflexe
   si un rappel n arrive pas.
 
+RIEN NE PART : COMMENT VOIR CE QUI SE PASSE
+-------------------------------------------
+L onglet « Rappels et relances » de la configuration donne trois
+niveaux de diagnostic, du plus general au plus fin :
+
+1. ETAT DES TACHES PLANIFIEES : chaque tache du module y est listee
+   avec « activee ou non », sa DERNIERE EXECUTION et son dernier compte
+   rendu, lus directement dans la table des taches de Dolibarr. Si la
+   tache est activee mais affiche « jamais executee », le probleme
+   n est pas le module : le cron de Dolibarr n est pas en service cote
+   serveur (ligne crontab appelant scripts/cron/cron_run_jobs.php).
+
+2. TESTER LA SELECTION : quels evenements seraient traites maintenant,
+   avec le numero trouve et l etat de chacun. Aucun appel reseau.
+
+3. SIMULER MAINTENANT / EXECUTER MAINTENANT : joue la tache et affiche
+   son journal complet, etape par etape (criteres retenus, nombre
+   d evenements, numero utilise, message, code de reponse de l API).
+   « Simuler » appelle reellement l API en mode essai : rien n est
+   envoye ni debite, mais tout le chemin est parcouru.
+
+Le meme journal est ecrit dans le syslog de Dolibarr (prefixe
+« Sms123Cron : » et « Sms123Api::envoyer »), consultable dans
+Accueil > Outils d administration > Fichiers de log.
+
+Enfin, une tentative qui echoue AVANT d atteindre la passerelle (pas de
+reseau, pare-feu, proxy) est desormais tracee dans l historique avec le
+code ERR et la raison : plus aucun envoi ne disparait sans laisser de
+trace.
+
   Variables : {date} {heure} {label} {societe} {masociete}.
 
 - RELANCES DE FACTURES IMPAYEES : SMS aux clients dont la facture

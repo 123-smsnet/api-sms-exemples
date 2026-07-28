@@ -89,7 +89,7 @@ print load_fiche_titre($langs->transnoentities('Sms123History'), '', 'generic');
 
 $ar = getDolGlobalString('SMS123_AR_ACTIF');
 
-$sql = 'SELECT rowid, datec, numero, message, code, methode, origine, fk_user, statut, date_ar, erreur_ar';
+$sql = 'SELECT rowid, datec, numero, message, code, methode, origine, fk_user, reference, statut, date_ar, erreur_ar';
 $sql .= ' FROM '.MAIN_DB_PREFIX.'sms123_envoi';
 $sql .= ' WHERE entity = '.((int) $conf->entity);
 $sql .= ' ORDER BY datec DESC';
@@ -113,7 +113,11 @@ if ($resql && $db->num_rows($resql) > 0) {
 		print '<td>'.dol_escape_htmltag($obj->numero).'</td>';
 		print '<td>'.dol_escape_htmltag(dol_trunc($obj->message, 60)).'</td>';
 		print '<td><b style="color:'.($reussi ? '#268614' : '#c83232').'">'.dol_escape_htmltag($obj->code).'</b> '
-			.'<span class="opacitymedium">'.Sms123Api::libelle($obj->code).'</span></td>';
+			.'<span class="opacitymedium">'.Sms123Api::libelle($obj->code);
+		if ($obj->code === 'ERR' && !empty($obj->reference)) {
+			print ' &mdash; '.dol_escape_htmltag($obj->reference);
+		}
+		print '</span></td>';
 		if ($ar) {
 			$statut = empty($obj->statut) ? ($reussi ? 'attente' : '') : $obj->statut;
 			$couleurar = ($statut == 'remis') ? '#268614' : (($statut == 'non-remis') ? '#c83232' : '');
