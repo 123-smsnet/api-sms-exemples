@@ -196,6 +196,19 @@ Deux conditions :
 2. communiquez a 123-SMS l URL de retour affichee juste en dessous
    (documentation « Retour des accuses de reception par http »).
 
+COMMENT L ENVOI EST RECONNU : quand les accuses sont demandes, la
+passerelle renvoie, apres le code retour, une REFERENCE D ENVOI (de la
+forme « refaccuse=... »). Le module retient cette VALEUR et la conserve
+dans l historique : c est elle qui revient dans le parametre refenvoi
+de l accuse, le rapprochement est donc exact meme si plusieurs SMS
+partent vers le meme numero. A defaut de reference, le module retombe
+sur le dernier envoi connu vers ce numero (fenetre de 7 jours).
+
+La reponse brute de la passerelle est affichee telle quelle par le
+bouton « Tester la connexion », dans le journal des taches planifiees
+et dans le syslog : en cas de doute sur le format, c est elle qui fait
+foi.
+
 Cette URL repond TOUJOURS « OK » en HTTP 200, y compris a un appel sans
 parametre : c est ce que 123-SMS verifie au moment de la declarer. Le
 bouton « Verifier l URL de retour » de la configuration fait ce controle

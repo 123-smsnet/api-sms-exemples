@@ -116,12 +116,17 @@ class Sms123Cron
 			$code = Sms123Api::envoyer($ligne['numero'], $message, $test,
 				'rappel-rdv#'.$ligne['id'], (int) $ligne['objet']->fk_soc);
 
+			$brut = empty(Sms123Api::$derniereReponse['brut']) ? ''
+				: ' [reponse brute : "'.Sms123Api::$derniereReponse['brut'].'"]';
+			$ref = empty(Sms123Api::$derniereReponse['reference']) ? ''
+				: ' [reference '.Sms123Api::$derniereReponse['reference'].']';
+
 			if (Sms123Api::estSucces($code, $test)) {
 				$envoyes++;
-				$this->tracer($prefixe.' : reponse '.$code.' - '.Sms123Api::libelle($code));
+				$this->tracer($prefixe.' : reponse '.$code.' - '.Sms123Api::libelle($code).$ref.$brut);
 			} else {
 				$detail .= 'Evenement '.$ligne['id'].' : code '.$code.'. ';
-				$this->tracer($prefixe.' : ECHEC, reponse '.$code.' - '.Sms123Api::libelle($code), LOG_ERR);
+				$this->tracer($prefixe.' : ECHEC, reponse '.$code.' - '.Sms123Api::libelle($code).$brut, LOG_ERR);
 			}
 		}
 

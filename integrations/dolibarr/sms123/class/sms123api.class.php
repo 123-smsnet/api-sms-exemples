@@ -11,6 +11,9 @@ class Sms123Api
 	const URL = 'https://www.123-sms.net/http.php';
 	const URL_SOLDE = 'https://www.123-sms.net/solde_comptes.php';
 
+	/** Derniere reponse de l'API : brut, code, reference, methode, duree. */
+	public static $derniereReponse = array();
+
 	/** Charge les traductions du module (appelable plusieurs fois sans surcout). */
 	public static function langs()
 	{
@@ -93,10 +96,23 @@ class Sms123Api
 			return 'ERR: '.$detail;
 		}
 
-		// Avec refaccuse, l'API peut renvoyer le code suivi d'une reference d'envoi
+		// Avec refaccuse, la passerelle renvoie le code suivi de la reference
 		list($code, $reference) = self::separerCodeReference($reponse['contenu']);
+
+		// La reponse brute reste accessible : elle est affichee dans les
+		// journaux et dans le diagnostic, ou elle vaut toutes les suppositions.
+		self::$derniereReponse = array(
+			'brut' => dol_trunc($reponse['contenu'], 200),
+			'code' => $code,
+			'reference' => $reference,
+			'methode' => $reponse['methode'],
+			'duree' => $reponse['duree'],
+		);
+
 		dol_syslog('Sms123Api::envoyer origine='.$origine.' -> code '.$code
+			.($reference !== '' ? ' reference='.$reference : '')
 			.' ('.$reponse['methode'].', '.$reponse['duree'].' ms)'
+			.' reponse brute : "'.dol_trunc($reponse['contenu'], 200).'"'
 			.(self::estSucces($code, $test) ? '' : ' ECHEC : '.self::libelle($code)),
 			self::estSucces($code, $test) ? LOG_INFO : LOG_WARNING);
 
@@ -113,8 +129,20 @@ class Sms123Api
 		return $code;
 	}
 
+	/** Codes retour de l'API a trois chiffres (les seuls). */
+	const CODES_LONGS = array('100', '101', '102');
+
 	/**
-	 * Separe le code retour (2 chiffres) de la reference d'envoi eventuelle.
+	 * Separe le code retour de la reference d'envoi que la passerelle renvoie
+	 * lorsque les accuses de reception sont demandes.
+	 *
+	 * Deux pieges traites ici :
+	 *  - les codes 100, 101 et 102 ont TROIS chiffres ; ailleurs, seuls les
+	 *    deux premiers chiffres forment le code, le reste appartient a la
+	 *    reference (une reponse « 8012345 » vaut code 80, reference 12345) ;
+	 *  - la reference est renvoyee sous la forme « refaccuse=... » : c'est la
+	 *    VALEUR qu'il faut retenir, puisque c'est elle qui revient dans le
+	 *    parametre refenvoi de l'accuse de reception.
 	 *
 	 * @param string $contenu corps de la reponse HTTP
 	 * @return array          array(code, reference)
@@ -122,11 +150,42 @@ class Sms123Api
 	public static function separerCodeReference($contenu)
 	{
 		$brut = trim((string) $contenu);
-		if (preg_match('/^([0-9]{2})[^0-9A-Za-z]*(.*)$/s', $brut, $m)) {
-			return array($m[1], trim($m[2]));
+		if (!preg_match('/^([0-9]{2,3})(.*)$/s', $brut, $m)) {
+			return array($brut, '');
 		}
 
-		return array($brut, '');
+		$code = $m[1];
+		$reste = $m[2];
+		if (dol_strlen($code) == 3 && !in_array($code, self::CODES_LONGS, true)) {
+			$reste = substr($code, 2).$reste;
+			$code = substr($code, 0, 2);
+		}
+
+		return array($code, self::extraireReference($reste));
+	}
+
+	/**
+	 * Retient la reference d'envoi dans ce qui suit le code retour.
+	 *
+	 * @param string $texte fin de la reponse de l'API
+	 * @return string
+	 */
+	public static function extraireReference($texte)
+	{
+		$texte = trim((string) $texte);
+		if ($texte === '') {
+			return '';
+		}
+		// Forme nommee : refaccuse=..., refenvoi=..., ref: ...
+		if (preg_match('/(?:refaccuse|refenvoi|ref)\s*[=:]\s*([A-Za-z0-9_.\-]+)/i', $texte, $m)) {
+			return $m[1];
+		}
+		// Sinon, le premier jeton exploitable
+		if (preg_match('/([A-Za-z0-9_.\-]{2,})/', $texte, $m)) {
+			return $m[1];
+		}
+
+		return '';
 	}
 
 	/**
@@ -510,10 +569,15 @@ class Sms123Api
 						: self::t('Sms123DiagReachKo')));
 
 		if ($reponse['http_code'] == 200) {
-			list($code, ) = self::separerCodeReference($reponse['contenu']);
+			list($code, $reference) = self::separerCodeReference($reponse['contenu']);
 			$identifiants_ok = !in_array($code, array('82', '88', '87'), true);
 			$tests[] = array(self::t('Sms123DiagCredOk'), $identifiants_ok ? 'ok' : 'ko',
 				self::t('Sms123DiagApiAnswer', $code, self::libelle($code)));
+
+			// La reponse telle quelle : le meilleur juge de paix sur le format
+			$tests[] = array(self::t('Sms123DiagRawAnswer'), 'info',
+				'"'.dol_trunc($reponse['contenu'], 120).'"'
+				.($reference !== '' ? ' -> '.self::t('Sms123DiagReference', $reference) : ''));
 
 			$solde = self::solde();
 			$tests[] = array(self::t('Sms123DiagBalance'), $solde === null ? 'info' : ($solde > 0 ? 'ok' : 'ko'),
