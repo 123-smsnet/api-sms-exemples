@@ -1,0 +1,39 @@
+{
+	"id": "sms123",
+	"name": "123-SMS",
+	"pluginVersion": "1.0.0",
+	"description": {
+		"fr_FR": "Envoi de SMS par l'API 123-SMS.net : alertes domotiques, notifications de scénario, messages à la famille — sans matériel, sans carte SIM et sans abonnement.",
+		"en_US": "Send SMS through the 123-SMS.net API: home automation alerts, scenario notifications, family messages - no hardware, no SIM card, no subscription."
+	},
+	"licence": "MIT",
+	"author": "DRANER.COM (123-SMS.net)",
+	"require": "4.2",
+	"os": {
+		"min": 10,
+		"max": 12.99
+	},
+	"category": "communication",
+	"hasDependency": false,
+	"hasOwnDeamon": false,
+	"maxDependancyInstallTime": 0,
+	"documentation": "https://www.123-sms.net/envoyer-sms-jeedom.php",
+	"changelog": "https://github.com/123-smsnet/api-sms-exemples",
+	"link": {
+		"forum": "https://community.jeedom.com/",
+		"video": ""
+	},
+	"language": [
+		"fr_FR",
+		"en_US"
+	],
+	"compatibility": [
+		"smart",
+		"luna",
+		"atlas",
+		"rpi",
+		"docker",
+		"diy",
+		"mobile"
+	]
+}
